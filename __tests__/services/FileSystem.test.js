@@ -26,7 +26,6 @@ jest.mock('../../lib/utils/security.js', () => ({
 
 describe('FileSystem', () => {
   let fileSystem;
-  const originalHomedir = process.env.HOME || process.env.USERPROFILE;
   
   beforeEach(() => {
     // Reset all mocks

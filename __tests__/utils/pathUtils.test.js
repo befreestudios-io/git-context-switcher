@@ -13,8 +13,6 @@ jest.mock('os', () => ({
   homedir: () => mockedHomedir()
 }));
 
-// Import os after mocking
-import * as os from 'os';
 
 describe('pathUtils', () => {
   beforeEach(() => {

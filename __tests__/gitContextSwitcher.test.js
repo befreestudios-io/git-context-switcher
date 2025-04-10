@@ -36,6 +36,19 @@ describe('GitContextSwitcher', () => {
     mockFileSystem.gitConfigDirPath = '/mock/home/.gitconfig.d';
     mockFileSystem.configFilePath = '/mock/home/.gitcontexts';
     
+    // Setup mock methods
+    mockGitService.checkInstalled = jest.fn();
+    mockFileSystem.checkPermissions = jest.fn();
+    mockFileSystem.ensureConfigDirectoryExists = jest.fn();
+    mockFileSystem.backupGitConfig = jest.fn();
+    mockUI.getContextsFromUser = jest.fn();
+    mockFileSystem.saveContextConfig = jest.fn();
+    mockFileSystem.saveContexts = jest.fn();
+    mockFileSystem.readGitConfig = jest.fn();
+    mockGitService.removeConditionalIncludes = jest.fn();
+    mockGitService.generateConditionalIncludes = jest.fn();
+    mockFileSystem.writeGitConfig = jest.fn();
+    
     // Create instance with mocked dependencies
     switcher = createGitContextSwitcher();
     

@@ -1,7 +1,7 @@
 /**
  * Tests for the UserInterface class
  */
-import { jest, describe, test, expect, beforeEach } from '@jest/globals';
+import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { UserInterface } from '../../lib/services/UserInterface.js';
 
 // Create a properly mocked inquirer module
@@ -10,8 +10,6 @@ jest.mock('inquirer', () => ({
   prompt: mockPrompt
 }));
 
-// Import after mocking
-import inquirer from 'inquirer';
 
 // Mock chalk to prevent color output in tests
 jest.mock('chalk', () => ({

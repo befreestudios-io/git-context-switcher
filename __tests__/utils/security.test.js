@@ -13,8 +13,6 @@ jest.mock('fs', () => ({
   constants: { F_OK: 4, R_OK: 2, W_OK: 1 }
 }));
 
-// Import fs after mocking
-import * as fs from 'fs';
 
 describe('Security Utils', () => {
   beforeEach(() => {
