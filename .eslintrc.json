@@ -4,7 +4,8 @@
     "es2022": true
   },
   "extends": [
-    "eslint:recommended"
+    "eslint:recommended",
+    "plugin:security/recommended"
   ],
   "plugins": ["security"],
   "parserOptions": {
