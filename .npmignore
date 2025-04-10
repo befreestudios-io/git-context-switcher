@@ -1,0 +1,21 @@
+# Tests
+__tests__/
+coverage/
+*.test.js
+
+# GitHub specific files
+.github/
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+
+# Configuration files
+.eslintrc.json
+jest.config.js
+
+# Misc
+.DS_Store
+.vscode/
+node_modules/
+npm-debug.log
+yarn-error.log

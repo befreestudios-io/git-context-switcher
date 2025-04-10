@@ -1,0 +1,58 @@
+{
+  "name": "git-context-switcher",
+  "version": "1.0.0",
+  "description": "Switch between git contexts for different environments (personal, work, etc.)",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "git-context": "./index.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "lint": "eslint --ext .js .",
+    "prepare": "npm run lint",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": [
+    "git",
+    "config",
+    "context",
+    "conditional",
+    "include",
+    "multi-profile"
+  ],
+  "author": "Your Name <your.email@example.com> (https://yourwebsite.com)",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "fs-extra": "^11.3.0",
+    "inquirer": "^12.5.2"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.26.9",
+    "eslint": "^8.56.0",
+    "eslint-plugin-security": "^3.0.1",
+    "jest": "^29.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/burtonp/git-context-switcher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/burtonp/git-context-switcher/issues"
+  },
+  "homepage": "https://github.com/burtonp/git-context-switcher#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.js",
+    "lib/**/*"
+  ]
+}
