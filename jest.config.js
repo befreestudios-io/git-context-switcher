@@ -8,7 +8,7 @@ export default {
   moduleFileExtensions: ["js", "json", "node"],
   // Module name mapper for ES modules
   moduleNameMapper: {
-    "^(\\.{1,2}/.*)\\.js$": "$1"
+    "^(\\.\\.?/.*)\\.js$": "$1"
   },
   // Transforms
   transform: {},

@@ -3,26 +3,31 @@
  */
 import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import * as path from 'path';
-import * as os from 'os';
 import * as pathUtils from '../../lib/utils/pathUtils.js';
 
-// Mock os and path modules
+// Create a homedir mock function that we can control
+const mockedHomedir = jest.fn().mockReturnValue('/home/user');
+
+// Mock os module
 jest.mock('os', () => ({
-  homedir: jest.fn()
+  homedir: () => mockedHomedir()
 }));
+
+// Import os after mocking
+import * as os from 'os';
 
 describe('pathUtils', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Set up default mock for homedir
-    os.homedir.mockReturnValue('/home/user');
+    // Reset homedir mock to default value
+    mockedHomedir.mockReturnValue('/home/user');
   });
 
   describe('expandPath', () => {
     test('should expand tilde to home directory', () => {
       const result = pathUtils.expandPath('~/projects');
       expect(result).toBe('/home/user/projects');
-      expect(os.homedir).toHaveBeenCalled();
+      expect(mockedHomedir).toHaveBeenCalled();
     });
 
     test('should not modify absolute paths', () => {
@@ -74,7 +79,7 @@ describe('pathUtils', () => {
     });
 
     test('should expand tilde in patterns', () => {
-      os.homedir.mockReturnValue('/home/developer');
+      mockedHomedir.mockReturnValue('/home/developer');
       
       const currentPath = '/home/developer/projects';
       const pattern = '~/projects';
@@ -82,7 +87,7 @@ describe('pathUtils', () => {
       const result = pathUtils.matchPath(currentPath, pattern);
       
       expect(result).toBe(true);
-      expect(os.homedir).toHaveBeenCalled();
+      expect(mockedHomedir).toHaveBeenCalled();
     });
 
     test('should not match when paths differ', () => {
