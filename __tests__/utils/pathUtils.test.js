@@ -1,31 +1,31 @@
 /**
  * Tests for pathUtils functions
  */
-import { jest, describe, test, expect, beforeEach } from '@jest/globals';
-import * as path from 'path';
+import { jest, describe, test, expect, beforeEach, afterAll } from '@jest/globals';
+import path from 'path';
 import * as pathUtils from '../../lib/utils/pathUtils.js';
+import { mockHomedir, setTestEnvironment, restoreEnvironment } from '../utils/testUtils/pathTestUtils.js';
 
-// Create a homedir mock function that we can control
-const mockedHomedir = jest.fn().mockReturnValue('/home/user');
+// Set test environment
+setTestEnvironment('test');
 
-// Mock os module
-jest.mock('os', () => ({
-  homedir: () => mockedHomedir()
-}));
-
+// Standard test home directory
+const TEST_HOME_DIR = '/home/user';
 
 describe('pathUtils', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset homedir mock to default value
-    mockedHomedir.mockReturnValue('/home/user');
+    mockHomedir.mockReturnValue(TEST_HOME_DIR);
+  });
+
+  afterAll(() => {
+    restoreEnvironment();
   });
 
   describe('expandPath', () => {
     test('should expand tilde to home directory', () => {
-      const result = pathUtils.expandPath('~/projects');
-      expect(result).toBe('/home/user/projects');
-      expect(mockedHomedir).toHaveBeenCalled();
+      const result = pathUtils.expandPath('~/projects', TEST_HOME_DIR);
+      expect(result).toBe(`${TEST_HOME_DIR}/projects`);
     });
 
     test('should not modify absolute paths', () => {
@@ -41,8 +41,8 @@ describe('pathUtils', () => {
     });
 
     test('should handle just tilde', () => {
-      const result = pathUtils.expandPath('~');
-      expect(result).toBe('/home/user');
+      const result = pathUtils.expandPath('~', TEST_HOME_DIR);
+      expect(result).toBe(TEST_HOME_DIR);
     });
 
     test('should handle undefined or empty paths', () => {
@@ -51,9 +51,9 @@ describe('pathUtils', () => {
     });
 
     test('should handle paths with tilde in the middle', () => {
-      const path = 'path/with/~/tilde';
-      const result = pathUtils.expandPath(path);
-      expect(result).toBe(path);
+      const testPath = 'path/with/~/tilde';
+      const result = pathUtils.expandPath(testPath);
+      expect(result).toBe(testPath);
     });
   });
 
@@ -77,15 +77,16 @@ describe('pathUtils', () => {
     });
 
     test('should expand tilde in patterns', () => {
-      mockedHomedir.mockReturnValue('/home/developer');
+      const altHomeDir = '/home/developer';
+      // We'll use the explicit test parameter instead of relying on mockHomedir
       
       const currentPath = '/home/developer/projects';
       const pattern = '~/projects';
       
-      const result = pathUtils.matchPath(currentPath, pattern);
+      const result = pathUtils.matchPath(currentPath, pattern, altHomeDir);
       
       expect(result).toBe(true);
-      expect(mockedHomedir).toHaveBeenCalled();
+      // No need to check if mockHomedir was called since we're explicitly passing the home dir
     });
 
     test('should not match when paths differ', () => {

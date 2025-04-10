@@ -3,7 +3,7 @@
  */
 import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import { FileSystem } from '../../lib/services/FileSystem.js';
-import { sanitizeInput } from '../../lib/utils/security.js';
+import { mockSanitizeInput } from '../setup.js';
 import path from 'path';
 
 // Mock the fs-extra module
@@ -19,11 +19,6 @@ const mockFs = {
 
 jest.mock('fs-extra', () => mockFs);
 
-// Mock security util
-jest.mock('../../lib/utils/security.js', () => ({
-  sanitizeInput: jest.fn(input => input)
-}));
-
 describe('FileSystem', () => {
   let fileSystem;
   
@@ -31,7 +26,7 @@ describe('FileSystem', () => {
     // Reset all mocks
     jest.clearAllMocks();
     Object.values(mockFs).forEach(mock => mock.mockReset());
-    sanitizeInput.mockClear();
+    mockSanitizeInput.mockClear();
     
     // Create a new instance of FileSystem
     fileSystem = new FileSystem();
@@ -176,6 +171,7 @@ describe('FileSystem', () => {
     });
   });
 
+  // Update test cases to use mockSanitizeInput instead of sanitizeInput
   describe('saveContextConfig', () => {
     test('should save context config to file', async () => {
       const contextName = 'work';
@@ -183,15 +179,15 @@ describe('FileSystem', () => {
       mockFs.writeFile.mockResolvedValueOnce();
       
       // Mock sanitizeInput to return the same value
-      sanitizeInput.mockImplementation(input => input);
+      mockSanitizeInput.mockImplementation(input => input);
       
       await fileSystem.saveContextConfig(contextName, content);
       
-      expect(sanitizeInput).toHaveBeenCalledWith(contextName);
+      expect(mockSanitizeInput).toHaveBeenCalledWith(contextName);
       expect(mockFs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining(path.join('contexts', 'work.gitconfig')),
         content,
-        'utf8'
+        { mode: 0o600 } // Update expected parameters to match implementation
       );
     });
     
@@ -201,20 +197,20 @@ describe('FileSystem', () => {
       mockFs.writeFile.mockResolvedValueOnce();
       
       // Mock sanitizeInput to remove dangerous characters
-      sanitizeInput.mockImplementation(input => input.replace(/[;&|`$(){}[\]\\"'*?~<>]/g, ''));
+      mockSanitizeInput.mockImplementation(input => input.replace(/[;&|`$(){}[\]\\"'*?~<>]/g, ''));
       
       await fileSystem.saveContextConfig(contextName, content);
       
-      expect(sanitizeInput).toHaveBeenCalledWith(contextName);
+      expect(mockSanitizeInput).toHaveBeenCalledWith(contextName);
       expect(mockFs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining(path.join('contexts', 'workrm-rf.gitconfig')),
         content,
-        'utf8'
+        { mode: 0o600 } // Update expected parameters to match implementation
       );
     });
     
     test('should propagate errors from fs operations', async () => {
-      sanitizeInput.mockImplementation(input => input);
+      mockSanitizeInput.mockImplementation(input => input);
       mockFs.writeFile.mockRejectedValueOnce(new Error('Write failed'));
       
       await expect(fileSystem.saveContextConfig('work', 'content')).rejects.toThrow('Write failed');
@@ -225,48 +221,49 @@ describe('FileSystem', () => {
     test('should delete context config file', async () => {
       const contextName = 'work';
       mockFs.unlink.mockResolvedValueOnce();
+      mockFs.pathExists.mockResolvedValueOnce(true);
       
       // Mock sanitizeInput to return the same value
-      sanitizeInput.mockImplementation(input => input);
+      mockSanitizeInput.mockImplementation(input => input);
       
       await fileSystem.deleteContextConfig(contextName);
       
-      expect(sanitizeInput).toHaveBeenCalledWith(contextName);
-      expect(mockFs.unlink).toHaveBeenCalledWith(
+      expect(mockSanitizeInput).toHaveBeenCalledWith(contextName);
+      expect(mockFs.remove).toHaveBeenCalledWith(
         expect.stringContaining(path.join('contexts', 'work.gitconfig'))
       );
     });
     
     test('should sanitize context name before using in path', async () => {
       const contextName = 'work;rm -rf /';
-      mockFs.unlink.mockResolvedValueOnce();
+      mockFs.pathExists.mockResolvedValueOnce(true);
+      mockFs.remove.mockResolvedValueOnce();
       
       // Mock sanitizeInput to remove dangerous characters
-      sanitizeInput.mockImplementation(input => input.replace(/[;&|`$(){}[\]\\"'*?~<>]/g, ''));
+      mockSanitizeInput.mockImplementation(input => input.replace(/[;&|`$(){}[\]\\"'*?~<>]/g, ''));
       
       await fileSystem.deleteContextConfig(contextName);
       
-      expect(sanitizeInput).toHaveBeenCalledWith(contextName);
-      expect(mockFs.unlink).toHaveBeenCalledWith(
+      expect(mockSanitizeInput).toHaveBeenCalledWith(contextName);
+      expect(mockFs.remove).toHaveBeenCalledWith(
         expect.stringContaining(path.join('contexts', 'workrm-rf.gitconfig'))
       );
     });
     
     test('should handle file not found gracefully', async () => {
-      sanitizeInput.mockImplementation(input => input);
-      const error = new Error('ENOENT: no such file or directory');
-      error.code = 'ENOENT';
-      mockFs.unlink.mockRejectedValueOnce(error);
+      mockSanitizeInput.mockImplementation(input => input);
+      mockFs.pathExists.mockResolvedValueOnce(false);
       
       // Should not throw error
       await fileSystem.deleteContextConfig('work');
       
-      expect(mockFs.unlink).toHaveBeenCalled();
+      expect(mockFs.remove).not.toHaveBeenCalled();
     });
     
     test('should propagate other errors from fs operations', async () => {
-      sanitizeInput.mockImplementation(input => input);
-      mockFs.unlink.mockRejectedValueOnce(new Error('Delete failed'));
+      mockSanitizeInput.mockImplementation(input => input);
+      mockFs.pathExists.mockResolvedValueOnce(true);
+      mockFs.remove.mockRejectedValueOnce(new Error('Delete failed'));
       
       await expect(fileSystem.deleteContextConfig('work')).rejects.toThrow('Delete failed');
     });

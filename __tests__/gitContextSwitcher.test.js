@@ -3,59 +3,81 @@
  */
 import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import { createGitContextSwitcher } from '../lib/gitContextSwitcher.js';
-import { FileSystem } from '../lib/services/FileSystem.js';
-import { GitService } from '../lib/services/GitService.js';
-import { UserInterface } from '../lib/services/UserInterface.js';
-import { Context } from '../lib/models/Context.js';
-import { pathPatternToRegex } from '../lib/utils/pathUtils.js';
+import { mockContextFromObject, mockPathPatternToRegex } from './setup.js';
+
+// Create mocks for the test
+const mockFileSystem = {
+  checkPermissions: jest.fn(),
+  ensureConfigDirectoryExists: jest.fn(),
+  backupGitConfig: jest.fn(),
+  loadContexts: jest.fn(),
+  saveContextConfig: jest.fn(),
+  saveContexts: jest.fn(),
+  readGitConfig: jest.fn(),
+  writeGitConfig: jest.fn(),
+  deleteContextConfig: jest.fn(),
+  gitConfigPath: '/mock/home/.gitconfig',
+  gitConfigDirPath: '/mock/home/.gitconfig.d',
+  configFilePath: '/mock/home/.gitcontexts'
+};
+
+const mockGitService = {
+  checkInstalled: jest.fn(),
+  removeConditionalIncludes: jest.fn(),
+  generateConditionalIncludes: jest.fn(),
+  getActiveConfig: jest.fn()
+};
+
+const mockUI = {
+  displayHeader: jest.fn(),
+  displaySuccess: jest.fn(),
+  displayError: jest.fn(),
+  displayWarning: jest.fn(),
+  getContextsFromUser: jest.fn(),
+  getContextFromUser: jest.fn(),
+  selectContextToRemove: jest.fn(),
+  displayContexts: jest.fn(),
+  displayActiveContext: jest.fn()
+};
 
 // Mock dependencies
-jest.mock('../lib/services/FileSystem.js');
-jest.mock('../lib/services/GitService.js');
-jest.mock('../lib/services/UserInterface.js');
-jest.mock('../lib/models/Context.js');
-jest.mock('../lib/utils/pathUtils.js');
+jest.mock('../lib/services/FileSystem.js', () => ({
+  FileSystem: jest.fn().mockImplementation(() => mockFileSystem)
+}));
+
+jest.mock('../lib/services/GitService.js', () => ({
+  GitService: jest.fn().mockImplementation(() => mockGitService)
+}));
+
+jest.mock('../lib/services/UserInterface.js', () => ({
+  UserInterface: jest.fn().mockImplementation(() => mockUI)
+}));
 
 describe('GitContextSwitcher', () => {
   let switcher;
-  let mockFileSystem;
-  let mockGitService;
-  let mockUI;
   
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
     
-    // Create mock instances
-    mockFileSystem = new FileSystem();
-    mockGitService = new GitService();
-    mockUI = new UserInterface();
+    // Reset mock implementations
+    Object.values(mockFileSystem).forEach(mock => {
+      if (typeof mock === 'function') mock.mockReset();
+    });
     
-    // Setup path properties
-    mockFileSystem.gitConfigPath = '/mock/home/.gitconfig';
-    mockFileSystem.gitConfigDirPath = '/mock/home/.gitconfig.d';
-    mockFileSystem.configFilePath = '/mock/home/.gitcontexts';
+    Object.values(mockGitService).forEach(mock => {
+      if (typeof mock === 'function') mock.mockReset();
+    });
     
-    // Setup mock methods
-    mockGitService.checkInstalled = jest.fn();
-    mockFileSystem.checkPermissions = jest.fn();
-    mockFileSystem.ensureConfigDirectoryExists = jest.fn();
-    mockFileSystem.backupGitConfig = jest.fn();
-    mockUI.getContextsFromUser = jest.fn();
-    mockFileSystem.saveContextConfig = jest.fn();
-    mockFileSystem.saveContexts = jest.fn();
-    mockFileSystem.readGitConfig = jest.fn();
-    mockGitService.removeConditionalIncludes = jest.fn();
-    mockGitService.generateConditionalIncludes = jest.fn();
-    mockFileSystem.writeGitConfig = jest.fn();
+    Object.values(mockUI).forEach(mock => {
+      if (typeof mock === 'function') mock.mockReset();
+    });
+    
+    mockContextFromObject.mockReset();
+    mockPathPatternToRegex.mockReset();
     
     // Create instance with mocked dependencies
     switcher = createGitContextSwitcher();
-    
-    // Replace the automatically created instances with our mocks
-    switcher.fileSystem = mockFileSystem;
-    switcher.gitService = mockGitService;
-    switcher.ui = mockUI;
   });
   
   describe('runSetupWizard', () => {
@@ -259,10 +281,10 @@ describe('GitContextSwitcher', () => {
       ];
       
       // Mock Context.fromObject
-      Context.fromObject.mockImplementation(obj => obj);
+      mockContextFromObject.mockImplementation(obj => obj);
       
       // Mock path pattern matching
-      pathPatternToRegex.mockImplementation(pattern => {
+      mockPathPatternToRegex.mockImplementation(pattern => {
         if (pattern === '/work/**') {
           return { test: path => path.includes('/work') };
         }
@@ -300,10 +322,10 @@ describe('GitContextSwitcher', () => {
       ];
       
       // Mock Context.fromObject
-      Context.fromObject.mockImplementation(obj => obj);
+      mockContextFromObject.mockImplementation(obj => obj);
       
       // Mock path pattern matching (no match)
-      pathPatternToRegex.mockImplementation(() => ({ test: () => false }));
+      mockPathPatternToRegex.mockImplementation(() => ({ test: () => false }));
       
       // Setup process.cwd mock
       const originalCwd = process.cwd;
@@ -342,10 +364,10 @@ describe('GitContextSwitcher', () => {
       ];
       
       // Mock Context.fromObject
-      Context.fromObject.mockImplementation(obj => obj);
+      mockContextFromObject.mockImplementation(obj => obj);
       
       // Mock path pattern matching
-      pathPatternToRegex.mockImplementation(() => ({ test: () => true }));
+      mockPathPatternToRegex.mockImplementation(() => ({ test: () => true }));
       
       // Setup other mocks
       mockFileSystem.loadContexts.mockResolvedValue(contexts);
