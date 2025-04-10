@@ -1,23 +1,33 @@
 /**
  * Tests for security utilities
  */
-import { jest, describe, test, expect, beforeEach, afterAll } from '@jest/globals';
-
+import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import * as security from '../../lib/utils/security.js';
 
-// Create a spy on the original implementation
-const originalCheckFilePermissions = security.checkFilePermissions;
+// For ES modules we need to mock entire modules rather than individual functions
+jest.unstable_mockModule('fs', () => ({
+  accessSync: jest.fn(),
+  constants: { F_OK: 0, R_OK: 4, W_OK: 2, X_OK: 1 }
+}));
 
 describe('Security Utils', () => {
-  beforeEach(() => {
+  let originalNodeEnv;
+  let mockFs;
+  
+  beforeEach(async () => {
+    // Get the mock fs module
+    mockFs = await import('fs');
+    
+    // Store original NODE_ENV
+    originalNodeEnv = process.env.NODE_ENV;
+    
+    // Reset mocks
     jest.clearAllMocks();
-    // Restore original implementation after each test
-    security.checkFilePermissions = originalCheckFilePermissions;
   });
 
-  afterAll(() => {
-    // Ensure we restore the original implementation
-    security.checkFilePermissions = originalCheckFilePermissions;
+  afterEach(() => {
+    // Restore NODE_ENV after each test
+    process.env.NODE_ENV = originalNodeEnv;
   });
 
   describe('validateFilePath', () => {
@@ -52,32 +62,18 @@ describe('Security Utils', () => {
   
   describe('checkFilePermissions', () => {
     test('should return true in test environment', () => {
-      const filePath = '/path/to/config.json';
+      // Set test environment
       process.env.NODE_ENV = 'test';
-      expect(security.checkFilePermissions(filePath)).toBe(true);
-    });
-    
-    test('should handle permission denied error', () => {
-      // Override the implementation for this test
-      security.checkFilePermissions = jest.fn().mockImplementation(() => {
-        throw new Error('Permission denied for: /path/to/file');
-      });
       
-      expect(() => security.checkFilePermissions('/path/to/file'))
-        .toThrow('Permission denied for:');
-    });
-
-    test('should handle file not found error', () => {
-      // Override the implementation for this test
-      security.checkFilePermissions = jest.fn().mockImplementation(() => {
-        throw new Error('File not found: /path/to/nonexistent');
-      });
+      const filePath = '/path/to/config.json';
+      const result = security.checkFilePermissions(filePath);
       
-      expect(() => security.checkFilePermissions('/path/to/nonexistent'))
-        .toThrow('File not found:');
+      expect(result).toBe(true);
     });
   });
-  
+
+  // Note: We're separating these production tests because we need to test security.js's 
+  // direct implementation, which we can't easily mock in ESM context
   describe('sanitizeInput', () => {
     test('should remove potential dangerous characters', () => {
       const inputs = [

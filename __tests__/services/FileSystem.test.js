@@ -14,7 +14,8 @@ const mockFs = {
   copy: jest.fn(),
   readFile: jest.fn(),
   writeFile: jest.fn(),
-  unlink: jest.fn()
+  unlink: jest.fn(),
+  remove: jest.fn() // Add the missing remove function
 };
 
 jest.mock('fs-extra', () => mockFs);
