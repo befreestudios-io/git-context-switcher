@@ -48,6 +48,14 @@ jest.mock('../lib/utils/security.js', () => ({
   checkFilePermissions: jest.fn(() => true)
 }));
 
+// Store a reference to the mock function for export
+const mockGetStandardPaths = jest.fn().mockReturnValue({
+  homeDir: '/mock/home',
+  gitConfigPath: '/mock/home/.gitconfig',
+  gitConfigDirPath: '/mock/home/.gitconfig.d',
+  configFilePath: '/mock/home/.gitconfig.d/contexts.json'
+});
+
 jest.mock('../lib/utils/pathUtils.js', () => ({
   pathPatternToRegex: mockPathPatternToRegex,
   expandPath: jest.fn((path, testHomeDir) => {
@@ -63,7 +71,8 @@ jest.mock('../lib/utils/pathUtils.js', () => ({
       : pattern;
     return currentPath.startsWith(expandedPattern.replace(/\*\*?/g, ''));
   }),
-  createFullPath: jest.fn((base, rel) => rel ? `${base}/${rel}` : base)
+  createFullPath: jest.fn((base, rel) => rel ? `${base}/${rel}` : base),
+  getStandardPaths: mockGetStandardPaths
 }));
 
 jest.mock('../lib/models/Context.js', () => ({
@@ -117,6 +126,7 @@ export {
   // Path utils mocks
   mockPathPatternToRegex,
   mockHomedir,
+  mockGetStandardPaths as getStandardPaths,
   
   // Model mocks
   mockContextFromObject,
