@@ -26,7 +26,7 @@
     "include",
     "multi-profile"
   ],
-  "author": "Your Name <your.email@example.com> (https://yourwebsite.com)",
+  "author": "Burton Podczerwinski <befreestudios@gmail.com> (https://github.com/befreestudios-io)",
   "license": "MIT",
   "dependencies": {
     "chalk": "^5.4.1",
@@ -42,12 +42,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/burtonp/git-context-switcher.git"
+    "url": "git+https://github.com/befreestudios-io/git-context-switcher.git"
   },
   "bugs": {
-    "url": "https://github.com/burtonp/git-context-switcher/issues"
+    "url": "https://github.com/befreestudios-io/git-context-switcher/issues"
   },
-  "homepage": "https://github.com/burtonp/git-context-switcher#readme",
+  "homepage": "https://github.com/befreestudios-io/git-context-switcher",
   "publishConfig": {
     "access": "public"
   },

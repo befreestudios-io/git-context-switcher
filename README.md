@@ -1,6 +1,6 @@
 # Git Context Switcher
 
-[![CI](https://github.com/yourusername/git-context-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/git-context-switcher/actions/workflows/ci.yml)
+[![CI](https://github.com/befreestudios-io/git-context-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/befreestudios-io/git-context-switcher/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/git-context-switcher.svg)](https://www.npmjs.com/package/git-context-switcher)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -31,7 +31,7 @@ Switch between git contexts easily for different environments (personal, work, c
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/git-context-switcher.git
+git clone https://github.com/befreestudios-io/git-context-switcher.git
 cd git-context-switcher
 
 # Install dependencies
