@@ -116,6 +116,7 @@ The tool will create:
 
 When you work in different repositories, Git automatically applies the correct configuration based on the repository path.
 
+
 ## License
 
 MIT
