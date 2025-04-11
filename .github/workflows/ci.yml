@@ -27,7 +27,7 @@ jobs:
       # Upload coverage with retry and don't fail the build if upload fails
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
-        continue-on-error: true
+        continue-on-error: false
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage/
