@@ -1,7 +1,7 @@
 /**
  * Tests for the Context class
  */
-import { jest, describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from '@jest/globals';
 import { Context } from '../../lib/models/Context.js';
 
 describe('Context', () => {
