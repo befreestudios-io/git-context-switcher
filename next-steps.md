@@ -6,6 +6,7 @@ Git Context Switcher is a tool that helps users switch between different Git con
 
 ## Current Status
 
+- Version 1.0.0 published to npm
 - Basic functionality implemented
 - File system operations working properly
 - Tests are in place
@@ -33,32 +34,65 @@ Git Context Switcher is a tool that helps users switch between different Git con
 
 ### Medium Priority
 
-1. **Feature Enhancements**
+1. **Feature Enhancements** (v1.1.0)
 
    - Add support for automatic context detection based on repository URL
    - Implement context templates for quick setup
    - Add ability to export/import contexts for sharing
 
-2. **Performance Improvements**
+2. **Performance Improvements** (v1.2.0)
 
    - Optimize file operations for large git config files
    - Implement caching for frequently accessed configs
 
-3. **User Experience**
+3. **User Experience** (v1.3.0)
    - Improve CLI output with better formatting and colors
    - Add interactive mode for context setup
    - Implement context validation
 
 ### Low Priority
 
-1. **Platform Specific Enhancements**
+1. **Platform Specific Enhancements** (v1.4.0)
 
    - Add specific handling for Windows paths
    - Create installation scripts for different platforms
 
-2. **Integration**
+2. **Integration** (v1.5.0)
    - Create hooks for popular IDEs and editors
    - Add integration with other Git tools
+
+## Version Planning
+
+### Semantic Versioning Guidelines
+
+- **MAJOR (X.0.0)**: Breaking changes that are not backward compatible
+- **MINOR (0.X.0)**: New features that are backward compatible
+- **PATCH (0.0.X)**: Bug fixes and minor improvements that are backward compatible
+
+### Release Planning
+
+1. **v1.0.x Patches**:
+
+   - Bug fixes
+   - Documentation improvements
+   - Minor optimizations
+
+2. **v1.1.0 - v1.5.0**:
+
+   - Feature additions as outlined above
+   - Each feature set should be released as a minor version increment
+
+3. **v2.0.0 (Future)**:
+   - Consider for any breaking changes to the API or CLI interface
+   - Major architectural improvements
+
+### Release Process
+
+1. Update version in package.json
+2. Update CHANGELOG.md with changes
+3. Create git tag for the version
+4. Push to GitHub
+5. Publish to npm
 
 ## Notes
 
@@ -72,4 +106,4 @@ Git Context Switcher is a tool that helps users switch between different Git con
 - Maintain ES modules pattern for better future compatibility
 - Keep the configuration format simple and compatible with Git's native format
 
-Last updated: April 15, 2025
+Last updated: April 28, 2025
