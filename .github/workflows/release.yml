@@ -48,7 +48,7 @@ jobs:
 
       - name: Get current version
         id: current_version
-        run: echo "CURRENT_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        run: echo 'CURRENT_VERSION=$(node -p "require(\"./package.json\").version")' >> $GITHUB_OUTPUT
 
       - name: Calculate new version
         id: new_version
