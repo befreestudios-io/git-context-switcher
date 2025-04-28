@@ -1,6 +1,7 @@
 # Git Context Switcher
 
 [![CI](https://github.com/befreestudios-io/git-context-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/befreestudios-io/git-context-switcher/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/befreestudios-io/git-context-switcher/graph/badge.svg?token=5B3VS4IIVF)](https://codecov.io/gh/befreestudios-io/git-context-switcher)
 [![npm version](https://img.shields.io/npm/v/git-context-switcher.svg)](https://www.npmjs.com/package/git-context-switcher)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

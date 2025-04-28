@@ -1,0 +1,26 @@
+name: "Git Context Switcher CodeQL Config"
+
+# Set of queries to run
+queries:
+  # Run the security-extended suite for additional security checks
+  - uses: security-extended
+
+# JavaScript specific settings
+paths-ignore:
+  - "**/node_modules/"
+  - "**/__tests__/"
+  - "**/coverage/"
+  - "jest.config.js"
+
+# Define the query suite precisely if needed
+query-filters:
+  # Exclude specific queries if they cause problems
+  - exclude:
+      id: js/redundant-assignment
+  
+# JavaScript-specific analysis options
+javascript:
+  # Scan dependencies for security vulnerabilities
+  dependencies: true
+  # Scan for XSS vulnerabilities
+  xss-filters: true
