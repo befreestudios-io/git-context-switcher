@@ -1,0 +1,89 @@
+name: Create GitHub Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - master
+
+# Add explicit permissions needed for creating releases
+permissions:
+  contents: write # Needed to create releases and tags
+  pull-requests: read
+
+jobs:
+  create-release:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Extract version from package.json
+        id: extract_version
+        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+
+      - name: Extract release notes from CHANGELOG
+        id: extract_notes
+        run: |
+          VERSION=${{ steps.extract_version.outputs.VERSION }}
+          # Parse changelog to get release notes for this version
+          CHANGELOG_CONTENT=$(cat CHANGELOG.md)
+
+          # Find the current version section
+          VERSION_PATTERN="## \\[${VERSION}\\]"
+          VERSION_LINE=$(echo "$CHANGELOG_CONTENT" | grep -n "$VERSION_PATTERN" | cut -d: -f1)
+
+          if [ -z "$VERSION_LINE" ]; then
+            echo "Error: Version $VERSION not found in CHANGELOG.md"
+            exit 1
+          fi
+
+          # Find the next version section or end of file
+          NEXT_VERSION_LINE=$(echo "$CHANGELOG_CONTENT" | tail -n +$((VERSION_LINE + 1)) | grep -n "^## \\[" | head -n 1 | cut -d: -f1)
+
+          if [ -z "$NEXT_VERSION_LINE" ]; then
+            # No next version, extract to end of file
+            RELEASE_NOTES=$(echo "$CHANGELOG_CONTENT" | tail -n +$((VERSION_LINE)))
+          else
+            # Extract to next version
+            RELEASE_NOTES=$(echo "$CHANGELOG_CONTENT" | tail -n +$((VERSION_LINE)) | head -n $((NEXT_VERSION_LINE - 1)))
+          fi
+
+          # Format release notes for GitHub Actions output
+          RELEASE_NOTES="${RELEASE_NOTES//'%'/'%25'}"
+          RELEASE_NOTES="${RELEASE_NOTES//$'\n'/'%0A'}"
+          RELEASE_NOTES="${RELEASE_NOTES//$'\r'/'%0D'}"
+
+          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Check if this is a prerelease
+        id: check_prerelease
+        run: |
+          VERSION=${{ steps.extract_version.outputs.VERSION }}
+          if [[ "$VERSION" == *"-"* ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.extract_version.outputs.VERSION }}
+          release_name: v${{ steps.extract_version.outputs.VERSION }}
+          body: ${{ steps.extract_notes.outputs.NOTES }}
+          draft: false
+          prerelease: ${{ steps.check_prerelease.outputs.IS_PRERELEASE }}

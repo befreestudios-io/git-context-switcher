@@ -136,6 +136,8 @@ When you work in different repositories, Git automatically applies the correct c
 
 Git Context Switcher follows [Semantic Versioning](https://semver.org/). For the versions available, see the [tags on this repository](https://github.com/befreestudios-io/git-context-switcher/tags) or check the [CHANGELOG.md](CHANGELOG.md) file.
 
+For maintainers and contributors looking to release new versions, please see our [Release Process](RELEASING.md) documentation.
+
 ## License
 
 MIT
@@ -151,6 +153,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 5. Open a Pull Request
 
 Please make sure your code follows the existing style and passes all tests.
+
+For more information about our development process, coding standards, and CI/CD pipeline, see our [Contributing Guidelines](CONTRIBUTING.md).
 
 ## Security
 
