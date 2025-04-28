@@ -2,19 +2,63 @@ name: Publish to npm
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      - run: npm test
-      - run: npm publish
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Run tests and linting to ensure quality
+      - name: Test and lint
+        run: |
+          npm run lint
+          npm test
+
+      # Extract version from the release tag
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      # Ensure package.json version matches the release tag
+      - name: Verify package version
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION=${{ steps.get_version.outputs.VERSION }}
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: package.json version ($PACKAGE_VERSION) does not match release tag ($TAG_VERSION)"
+            exit 1
+          fi
+
+      # Publish to npm
+      - name: Publish package
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+      # Add comment to release with publishing information
+      - name: Add publish comment to release
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const { owner, repo } = context.repo;
+            const release_id = context.payload.release.id;
+            const package_name = require('./package.json').name;
+            const version = require('./package.json').version;
+
+            await github.rest.repos.updateRelease({
+              owner,
+              repo,
+              release_id,
+              body: context.payload.release.body + `\n\n📦 Package \`${package_name}@${version}\` has been successfully published to npm.\n\nInstall with: \`npm install ${package_name}@${version}\``
+            });

@@ -3,8 +3,16 @@ name: CI
 on:
   push:
     branches: [main, master]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
   pull_request:
     branches: [main, master]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
 
 jobs:
   test:
@@ -15,16 +23,35 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetches all history for all branches and tags
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
 
-      # Upload coverage with retry and don't fail the build if upload fails
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      # Check package.json version against semver convention
+      - name: Verify semantic versioning
+        if: github.event_name == 'pull_request' && matrix.node-version == '20.x'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
+            echo "Error: package.json version ($VERSION) does not follow semantic versioning"
+            exit 1
+          fi
+
+      # Upload coverage with retry
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         continue-on-error: false
@@ -34,7 +61,30 @@ jobs:
           flags: unittests
           fail_ci_if_error: false
           verbose: true
-          # Add retries for rate limiting issues
         env:
           CODECOV_RETRY: 3
           CODECOV_RETRY_DELAY: 10
+
+  # New job to check CHANGELOG.md updates on pull requests
+  changelog:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetches all history for all branches and tags
+
+      - name: Check if CHANGELOG.md is updated
+        run: |
+          # Check if package.json was changed
+          if git diff --name-only origin/${{ github.base_ref }} HEAD | grep -q "package.json"; then
+            # If version changed, CHANGELOG should be updated too
+            VERSION_CHANGED=$(git diff origin/${{ github.base_ref }} HEAD -- package.json | grep "\"version\":" | wc -l)
+            CHANGELOG_UPDATED=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -q "CHANGELOG.md" && echo "1" || echo "0")
+            
+            if [ "$VERSION_CHANGED" -gt "0" ] && [ "$CHANGELOG_UPDATED" -eq "0" ]; then
+              echo "Error: Version changed in package.json but CHANGELOG.md not updated"
+              echo "Please update CHANGELOG.md with details of your changes"
+              exit 1
+            fi
+          fi
