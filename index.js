@@ -7,9 +7,14 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const packageJson = JSON.parse(
-  readFileSync(join(__dirname, "package.json"), "utf8")
-);
+let packageJson;
+try {
+  const packageContent = readFileSync(join(__dirname, "package.json"), "utf8");
+  packageJson = JSON.parse(packageContent);
+} catch (error) {
+  console.error("Error reading or parsing package.json:", error.message);
+  process.exit(1);
+}
 const switcher = createGitContextSwitcher();
 
 program
