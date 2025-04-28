@@ -148,7 +148,7 @@ jobs:
             5. The npm package will be published automatically
           labels: release
           branch: release/${{ steps.new_version.outputs.NEW_VERSION }}
-          base: master
+          base: ${{ github.repository_default_branch }}
 
       - name: PR Details
         if: ${{ steps.create_pr.outputs.pull-request-number }}
