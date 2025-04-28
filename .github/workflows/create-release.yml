@@ -7,6 +7,11 @@ on:
       - main
       - master
 
+# Add explicit permissions needed for creating releases
+permissions:
+  contents: write # Needed to create releases and tags
+  pull-requests: read
+
 jobs:
   create-release:
     if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')

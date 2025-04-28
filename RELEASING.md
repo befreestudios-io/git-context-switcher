@@ -43,6 +43,7 @@ Our release process is fully automated via GitHub Actions and follows semantic v
 #### 3. Automatic Publishing
 
 Upon PR merge, the following happens automatically:
+
 - GitHub creates a release and tag based on the version
 - The npm-publish workflow detects the new release and:
   - Runs tests to ensure everything works
@@ -62,12 +63,14 @@ We follow [Semantic Versioning](https://semver.org/) for all releases:
 
 If you encounter issues with the release process:
 
-1. **GitHub Actions failed**: 
+1. **GitHub Actions failed**:
+
    - Check the specific workflow logs in the Actions tab
    - Make sure all tests are passing
    - Ensure CHANGELOG.md is properly updated
 
 2. **npm publishing failed**:
+
    - Verify that the NPM_TOKEN secret is properly set in repository settings
    - Check that the version doesn't already exist on npm
 

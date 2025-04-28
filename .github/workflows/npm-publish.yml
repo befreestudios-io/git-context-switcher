@@ -4,6 +4,15 @@ on:
   release:
     types: [published]
 
+# Add explicit permissions needed for npm publishing workflow
+permissions:
+  contents: read
+  packages: write # Needed for npm package publishing
+  id-token: write # Needed for npm provenance
+  actions: read # For workflow details
+  issues: write # For commenting on related issues
+  repository-projects: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest

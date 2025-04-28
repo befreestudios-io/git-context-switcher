@@ -14,6 +14,12 @@ on:
       - "LICENSE"
       - ".gitignore"
 
+# Add explicit permissions following least privilege principle
+permissions:
+  contents: read
+  checks: write # Needed for test results
+  pull-requests: read
+
 jobs:
   test:
     runs-on: ubuntu-latest

@@ -17,6 +17,11 @@ on:
         required: false
         type: string
 
+# Add explicit permissions needed for release management
+permissions:
+  contents: write # For creating branches and commits
+  pull-requests: write # For creating pull requests
+
 jobs:
   prepare-release:
     runs-on: ubuntu-latest
