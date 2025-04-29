@@ -78,31 +78,261 @@ The wizard will:
 3. Guide you through setting up multiple contexts
 4. Update your main `.gitconfig` with conditional includes
 
-### Add a New Context
+### Command Reference
+
+Here's a complete reference of all available commands and their options:
+
+#### Setup Command
 
 ```bash
-git-context add
+git-context setup [options]
 ```
 
-### Remove a Context
+Initialize and configure git contexts with an interactive wizard.
+
+Options:
+
+- `--force` - Override existing configuration
+- `--quiet` - Reduce console output
+
+Example:
 
 ```bash
-git-context remove
+# Run setup with minimal output
+git-context setup --quiet
 ```
 
-### List All Configured Contexts
+#### Add Command
 
 ```bash
-git-context list
+git-context add [options]
 ```
 
-### Check Current Context
+Add a new git context configuration.
 
-Check which context is active in the current directory:
+Options:
+
+- `--name <name>` - Context name
+- `--path <path>` - Repository path pattern
+- `--user-name <name>` - Git user name
+- `--user-email <email>` - Git user email
+- `--signing-key <key>` - GPG signing key
+- `--no-interactive` - Skip interactive prompts
+
+Example:
 
 ```bash
+# Add a new context non-interactively
+git-context add --name work --path ~/work/ --user-name "Work User" --user-email "work@example.com"
+```
+
+#### Remove Command
+
+```bash
+git-context remove [options]
+```
+
+Remove an existing git context.
+
+Options:
+
+- `--name <name>` - Context name to remove
+- `--no-interactive` - Skip confirmation prompt
+
+Example:
+
+```bash
+# Remove a context without confirmation
+git-context remove --name old-client --no-interactive
+```
+
+#### List Command
+
+```bash
+git-context list [options]
+```
+
+List all configured contexts.
+
+Options:
+
+- `--format <format>` - Output format (text, json)
+
+Example:
+
+```bash
+# List contexts in JSON format
+git-context list --format json
+```
+
+#### Apply Command
+
+```bash
+git-context apply [options]
+```
+
+Check which context applies to the current directory.
+
+Options:
+
+- `--detail` - Show detailed configuration
+
+Example:
+
+```bash
+# Show detailed context information for current directory
+git-context apply --detail
+```
+
+### Detailed Examples
+
+#### Example 1: Setting up personal and work contexts
+
+```bash
+# Run the setup wizard
+git-context setup
+
+# Enter personal context details
+# Name: personal
+# Path: ~/personal/
+# User Name: Your Name
+# User Email: your.email@personal.com
+# (Optional) GPG Signing Key: ABC123DEF456
+
+# Enter work context details
+# Name: work
+# Path: ~/work/
+# User Name: Your Work Name
+# User Email: your.name@company.com
+# (Optional) GPG Signing Key: DEF456GHI789
+```
+
+This setup will:
+
+1. Create `~/.gitconfig.d/personal.gitconfig` containing:
+
+   ```
+   [user]
+       name = Your Name
+       email = your.email@personal.com
+       signingkey = ABC123DEF456
+   ```
+
+2. Create `~/.gitconfig.d/work.gitconfig` containing:
+
+   ```
+   [user]
+       name = Your Work Name
+       email = your.name@company.com
+       signingkey = DEF456GHI789
+   ```
+
+3. Add to your main `~/.gitconfig`:
+
+   ```
+   [includeIf "gitdir:~/personal/"]
+       path = ~/.gitconfig.d/personal.gitconfig
+
+   [includeIf "gitdir:~/work/"]
+       path = ~/.gitconfig.d/work.gitconfig
+   ```
+
+#### Example 2: Working with multiple client contexts
+
+```bash
+# Add a client context
+git-context add --name client1 --path ~/clients/client1/ --user-name "Your Name" --user-email "you@client1.com"
+
+# Add another client context
+git-context add --name client2 --path ~/clients/client2/ --user-name "Your Name" --user-email "you@client2.com"
+
+# Later, remove a client when no longer needed
+git-context remove --name client1
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### Permission Errors
+
+**Issue**: "Permission denied" errors when running the tool.
+
+**Solution**: Ensure you have read and write permissions for your home directory and `.gitconfig` file.
+
+```bash
+# Check permissions
+ls -la ~/.gitconfig
+ls -la ~/.gitconfig.d
+
+# Fix permissions if needed
+chmod 600 ~/.gitconfig
+chmod 700 ~/.gitconfig.d
+```
+
+#### Context Not Applied
+
+**Issue**: Git is not using the correct context configuration.
+
+**Solution**: Check that your repository path matches the pattern defined in your context.
+
+```bash
+# Check which context applies
 git-context apply
+
+# If needed, update your context with a more specific path
+git-context add --name work --path ~/exact/path/to/work/repos/ --user-name "Work User" --user-email "work@example.com"
 ```
+
+#### Merge Conflicts in .gitconfig
+
+**Issue**: Git shows merge conflicts in your `.gitconfig` file.
+
+**Solution**: The context switcher made changes to your config that conflict with other changes. Manually resolve the conflicts:
+
+1. Check your backup config file (created automatically by the tool)
+2. Manually merge the changes preserving both your modifications and the conditional includes
+
+#### Invalid Context Configuration
+
+**Issue**: Error message about invalid configuration when adding a context.
+
+**Solution**: Ensure your repository path pattern is valid and follows Git's pattern syntax:
+
+```bash
+# Use absolute paths with correct syntax
+git-context add --name personal --path "/Users/username/personal/**"
+
+# On Windows use proper path format
+git-context add --name work --path "C:/Users/username/work/**"
+```
+
+### Fixing Misconfigured Contexts
+
+If your contexts are misconfigured, you can:
+
+1. List all contexts to identify issues:
+
+   ```bash
+   git-context list
+   ```
+
+2. Remove problematic contexts:
+
+   ```bash
+   git-context remove --name problem-context
+   ```
+
+3. Add them back with correct settings:
+
+   ```bash
+   git-context add --name fixed-context --path correct/path/ --user-name "Name" --user-email "email@example.com"
+   ```
+
+4. If all else fails, you can start fresh:
+   ```bash
+   git-context setup --force
+   ```
 
 ## How It Works
 
