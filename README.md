@@ -24,6 +24,24 @@ Switch between git contexts easily for different environments (personal, work, c
 - Uses git's conditional includes based on repository paths
 - Automatically applies the right identity based on where your repositories are located
 
+### Repository URL-Based Detection (New in v1.1.0)
+
+- Automatically detect the appropriate context based on repository remote URLs
+- Match GitHub, GitLab, or any git hosting provider with flexible pattern matching
+- Supports both HTTPS and SSH remote URL formats
+
+### Context Templates (New in v1.1.0)
+
+- Quickly create new contexts using predefined templates
+- Built-in templates for common scenarios (personal, work, client projects, open source)
+- Auto-configure URL patterns for easier setup
+
+### Import/Export Capability (New in v1.1.0)
+
+- Share context configurations between machines or team members
+- Export your contexts to a single JSON file
+- Import contexts from a shared configuration file
+
 ### Configuration Management
 
 - Creates a `.gitconfig.d` directory to organize your context-specific configs
@@ -184,6 +202,82 @@ Example:
 git-context apply --detail
 ```
 
+#### Detect URL Command (New in v1.1.0)
+
+```bash
+git-context detect-url [options]
+```
+
+Detect the appropriate context based on the repository remote URL.
+
+Options:
+
+- `--remote <name>` - Specify remote name (default: origin)
+
+Example:
+
+```bash
+# Detect context using upstream remote instead of origin
+git-context detect-url --remote upstream
+```
+
+#### Templates Command (New in v1.1.0)
+
+```bash
+git-context templates
+```
+
+List available context templates for quick setup.
+
+Example:
+
+```bash
+# View all available templates
+git-context templates
+```
+
+#### Export Command (New in v1.1.0)
+
+```bash
+git-context export [options]
+```
+
+Export your contexts to a JSON file for sharing or backup.
+
+Options:
+
+- `--file <path>` - Specify output file path (default: ./git-contexts-export.json)
+- `--no-interactive` - Skip interactive prompts
+
+Example:
+
+```bash
+# Export to a custom location
+git-context export --file ~/backups/my-contexts.json
+```
+
+#### Import Command (New in v1.1.0)
+
+```bash
+git-context import [options]
+```
+
+Import contexts from a JSON file.
+
+Options:
+
+- `--file <path>` - Specify import file path
+- `--merge` - Merge with existing contexts (default behavior)
+- `--replace` - Replace existing contexts with same names
+- `--no-interactive` - Skip interactive prompts
+
+Example:
+
+```bash
+# Import contexts and replace any with the same names
+git-context import --file ~/shared-configs/team-contexts.json --replace
+```
+
 ### Detailed Examples
 
 #### Example 1: Setting up personal and work contexts
@@ -249,6 +343,67 @@ git-context add --name client2 --path ~/clients/client2/ --user-name "Your Name"
 # Later, remove a client when no longer needed
 git-context remove --name client1
 ```
+
+#### Example 3: Using repository URL detection (New in v1.1.0)
+
+```bash
+# First, configure contexts with URL patterns
+git-context add
+
+# During the interactive setup:
+# Name: github-personal
+# Path Pattern: ~/repos/personal/**
+# User Name: Your Name
+# User Email: personal@example.com
+# Add URL Patterns? Yes
+# URL Pattern: github.com/your-username/*
+# URL Pattern: <press Enter to finish>
+
+# Add another context for work
+git-context add
+
+# Name: github-work
+# Path Pattern: ~/repos/work/**
+# User Name: Your Work Name
+# User Email: you@company.com
+# Add URL Patterns? Yes
+# URL Pattern: github.com/company-org/*
+# URL Pattern: <press Enter to finish>
+
+# Now in any git repository, you can detect the context based on the remote URL
+cd ~/projects/any-location/company-project/
+git-context detect-url
+# This will show: "Repository URL matches context: github-work"
+```
+
+This example demonstrates how Git Context Switcher can automatically use the right identity based on the remote repository URL, regardless of where the repository is located on your filesystem.
+
+#### Example 4: Using templates and import/export (New in v1.1.0)
+
+```bash
+# List available templates
+git-context templates
+
+# Add a new context using a template
+git-context add
+# Select "Use a template? Yes"
+# Select template: personal
+# Enter name: my-personal
+# Enter path pattern: ~/projects/**
+# Enter user name and email
+
+# Export your contexts to share with teammates or use on another machine
+git-context export
+# Enter export path: ./my-contexts.json
+
+# On another machine, import your contexts
+git-context import
+# Enter import path: ./my-contexts.json
+# Select contexts to import
+# Choose whether to replace existing contexts with same names
+```
+
+This allows you to quickly set up consistent contexts across different machines and share standard configurations with team members.
 
 ## Troubleshooting
 

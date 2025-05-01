@@ -1,6 +1,6 @@
 {
   "name": "git-context-switcher",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Switch between git contexts for different environments (personal, work, etc.)",
   "type": "module",
   "main": "index.js",
