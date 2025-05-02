@@ -16,10 +16,7 @@ import { existsSync } from "fs"; // Import native fs.existsSync
 import path from "path";
 import os from "os";
 
-// Import the pathUtils module directly
-import * as pathUtils from "../../lib/utils/pathUtils.js";
-
-// Temporarily skip the entire integration test suite to allow other tests to run
+// Skip the entire test suite for now to allow other tests to run
 describe.skip("GitContextSwitcher Integration", () => {
   let switcher;
   let tempDir;
