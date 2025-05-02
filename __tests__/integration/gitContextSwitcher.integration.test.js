@@ -15,7 +15,6 @@ import fs from "fs-extra";
 import { existsSync } from "fs"; // Import native fs.existsSync
 import path from "path";
 import os from "os";
-import * as pathUtils from "../../lib/utils/pathUtils.js";
 
 // Skip the entire test suite for now to allow other tests to run
 describe.skip("GitContextSwitcher Integration", () => {
@@ -28,7 +27,10 @@ describe.skip("GitContextSwitcher Integration", () => {
 
   beforeEach(async () => {
     // Create temporary directories for testing
+    // Use fs-extra's method to create a unique temp directory
     tempDir = path.join(os.tmpdir(), `git-context-test-${Date.now()}`);
+    await fs.ensureDir(tempDir); // Create the directory
+
     homeDir = path.join(tempDir, "home");
     gitConfigPath = path.join(homeDir, ".gitconfig");
     gitConfigDirPath = path.join(homeDir, ".gitconfig.d");
@@ -46,6 +48,8 @@ describe.skip("GitContextSwitcher Integration", () => {
 
     // Create a new GitContextSwitcher instance
     switcher = createGitContextSwitcher();
+
+    // Mock all UI methods directly
 
     // Mock all UI methods directly instead of saving originals
     // This avoids issues with trying to restore methods later
@@ -117,8 +121,17 @@ describe.skip("GitContextSwitcher Integration", () => {
     switcher.ui.displayContextsList = jest.fn();
     switcher.ui.displayContextsWithUrlPatterns = jest.fn();
 
-    // Reset the mock for pathPatternToRegex before each test
-    pathUtils.pathPatternToRegex.mockClear();
+    // Reset and re-implement the mock for pathPatternToRegex before each test
+    // pathUtils.pathPatternToRegex.mockReset();
+    // pathUtils.pathPatternToRegex.mockImplementation((pattern) => {
+    //   // Properly escape regex special characters and replace glob patterns
+    //   const escaped = pattern
+    //     .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+    //     .replace(/\*\*/g, ".*")
+    //     .replace(/\*/g, "[^/]*")
+    //     .replace(/~/g, homeDir.replace(/\\/g, "\\\\"));
+    //   return new RegExp(`^${escaped}$`);
+    // });
   });
 
   afterEach(async () => {
@@ -132,8 +145,7 @@ describe.skip("GitContextSwitcher Integration", () => {
     // Restore environment
     process.env.HOME = originalHome;
 
-    // Restore any mocked functions
-    jest.restoreAllMocks();
+    // Clear all mocks but don't try to restore (as we used direct mocking)
     jest.clearAllMocks();
   });
 
@@ -240,6 +252,16 @@ describe.skip("GitContextSwitcher Integration", () => {
       { "user.name": "Work User", "user.email": "work@example.com" },
       ["github.com/work/*"]
     );
+    // Our pathPatternToRegex is already mocked at the module level
+    // Override it to return a regex that will match our test directory
+    // pathUtils.pathPatternToRegex.mockImplementation((pattern) => {
+    //   if (pattern.includes("work")) {
+    //     return new RegExp(
+    //       `^${workDir.replace(/[.+?^${}()|[\]\\]/g, "\\$&")}.*$`
+    //     );
+    //   }
+    //   return new RegExp("^$"); // Non-matching regex for other patterns
+    // });
 
     // Mock the system to be able to read the active config
     switcher.fileSystem.loadContexts = jest
@@ -248,7 +270,7 @@ describe.skip("GitContextSwitcher Integration", () => {
 
     // Our pathPatternToRegex is already mocked at the module level
     // Just ensure it's set to return a regex that will match our test directory
-    pathUtils.pathPatternToRegex.mockImplementation(() => new RegExp(workDir));
+    // pathUtils.pathPatternToRegex.mockImplementation(() => new RegExp(workDir));
 
     // Mock git service to return a config
     switcher.gitService.getActiveConfig = jest
