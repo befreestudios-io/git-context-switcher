@@ -1,5 +1,7 @@
 /**
- * Snapshot tests for UserInterface
+ * Snapshot tests for UserInterface output
+ * Note: We're not using actual snapshots but content-based assertions
+ * to keep the tests more maintainable
  */
 import {
   jest,
@@ -12,7 +14,22 @@ import {
 import { UserInterface } from "../../lib/services/UserInterface.js";
 import { Context } from "../../lib/models/Context.js";
 
-describe("UserInterface Snapshots", () => {
+// Mock chalk to prevent color output in tests
+jest.mock("chalk", () => {
+  // ...existing code...
+});
+
+// Mock path since it's used in several methods
+jest.mock("path", () => ({
+  join: jest.fn((...args) => args.join("/")),
+}));
+
+// Mock fs module to avoid reading actual files
+jest.mock("fs", () => ({
+  readFileSync: jest.fn(() => "Mock ASCII Logo"),
+}));
+
+describe("UserInterface Output Snapshots", () => {
   let ui;
   let mockConsole;
   let contexts;
@@ -20,19 +37,15 @@ describe("UserInterface Snapshots", () => {
   beforeEach(() => {
     // Mock console methods
     mockConsole = {
-      log: jest.fn(),
-      error: jest.fn(),
+      log: jest.spyOn(console, "log").mockImplementation(),
+      error: jest.spyOn(console, "error").mockImplementation(),
     };
-    console.log = mockConsole.log;
-    console.error = mockConsole.error;
 
-    // Create UI instance with a mock adapter
-    const mockAdapter = {
-      log: (...args) => mockConsole.log(...args),
-      error: (...args) => mockConsole.error(...args),
-      prompt: jest.fn().mockResolvedValue({}),
-    };
-    ui = new UserInterface(mockAdapter);
+    // Create a real UserInterface instance
+    ui = new UserInterface();
+
+    // Mock the displayLogo method to prevent it from affecting our tests
+    ui.displayLogo = jest.fn();
 
     // Create test contexts
     contexts = [

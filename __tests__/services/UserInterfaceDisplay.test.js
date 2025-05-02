@@ -38,6 +38,11 @@ jest.mock("path", () => ({
   join: jest.fn((...args) => args.join("/")),
 }));
 
+// Mock fs module to avoid reading actual files
+jest.mock("fs", () => ({
+  readFileSync: jest.fn(() => "Mock ASCII Logo"),
+}));
+
 // We don't need to mock the Context class for these display-only tests
 
 describe("UserInterface Display Methods", () => {
@@ -54,6 +59,9 @@ describe("UserInterface Display Methods", () => {
 
     // Create a UserInterface instance with our mock adapter
     ui = new UserInterface(mockAdapter);
+
+    // Mock the displayLogo method to prevent it from affecting our tests
+    ui.displayLogo = jest.fn();
   });
 
   afterEach(() => {
