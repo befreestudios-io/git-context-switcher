@@ -70,8 +70,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displayContexts(contexts, configDir);
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -83,8 +86,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displayActiveContext(contexts[0], configDir, activeConfig);
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -112,8 +118,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displayTemplates(templates);
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -124,8 +133,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displayContextsList(contexts, configDir);
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -136,8 +148,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displayContextsWithUrlPatterns(contexts, configDir);
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -145,8 +160,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displayHeader("Test Header");
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -154,8 +172,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displaySuccess("Operation completed successfully");
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -163,10 +184,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displayError("Something went wrong");
 
-    // Assert
+    // Assert - normalize output to handle platform differences
     const output = mockConsole.error.mock.calls
       .map((call) => call[0])
-      .join("\n");
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -174,8 +196,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displayWarning("This is a warning");
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 
@@ -183,8 +208,11 @@ describe("UserInterface Snapshots", () => {
     // Act
     ui.displaySetupInfo();
 
-    // Assert
-    const output = mockConsole.log.mock.calls.map((call) => call[0]).join("\n");
+    // Assert - normalize output to handle platform differences
+    const output = mockConsole.log.mock.calls
+      .map((call) => call[0])
+      .join("\n")
+      .replace(/\r\n/g, "\n"); // Normalize line endings
     expect(output).toMatchSnapshot();
   });
 });
