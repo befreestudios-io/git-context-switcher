@@ -15,6 +15,7 @@ import fs from "fs-extra";
 import { existsSync } from "fs"; // Import native fs.existsSync
 import path from "path";
 import os from "os";
+import * as pathUtils from "../../lib/utils/pathUtils.js";
 
 // Skip the entire test suite for now to allow other tests to run
 describe.skip("GitContextSwitcher Integration", () => {
