@@ -78,12 +78,22 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v6
         with:
-          tag_name: v${{ steps.extract_version.outputs.VERSION }}
-          release_name: v${{ steps.extract_version.outputs.VERSION }}
-          body: ${{ steps.extract_notes.outputs.NOTES }}
-          draft: false
-          prerelease: ${{ steps.check_prerelease.outputs.IS_PRERELEASE }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { repo, owner } = context.repo;
+            const version = '${{ steps.extract_version.outputs.VERSION }}';
+            const isPrerelease = ${{ steps.check_prerelease.outputs.IS_PRERELEASE }};
+
+            const release = await github.rest.repos.createRelease({
+              owner,
+              repo,
+              tag_name: `v${version}`,
+              name: `v${version}`,
+              body: `${{ steps.extract_notes.outputs.NOTES }}`,
+              draft: false,
+              prerelease: isPrerelease
+            });
+
+            console.log(`Created release: ${release.data.html_url}`);
