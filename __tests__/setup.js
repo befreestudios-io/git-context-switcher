@@ -82,6 +82,10 @@ jest.mock("fs-extra", () => mockFs);
 jest.mock("fs", () => ({
   accessSync: mockAccessSync,
   access: mockAccess,
+  mkdirSync: mockFs.mkdirSync,
+  statSync: mockFs.statSync,
+  writeFileSync: mockFs.writeFileSync,
+  existsSync: mockFs.pathExistsSync,
   constants: {
     F_OK: 0,
     R_OK: 4,
