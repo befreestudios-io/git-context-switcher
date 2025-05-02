@@ -32,7 +32,8 @@
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "fs-extra": "^11.3.0",
-    "inquirer": "^12.5.2"
+    "inquirer": "^12.5.2",
+    "tmp": "^0.2.3"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.9",
