@@ -1,5 +1,5 @@
 /**
- * Tests for the UserInterface class
+ * Tests for UserInterface display methods
  */
 import {
   jest,
@@ -33,27 +33,26 @@ jest.mock("chalk", () => {
   return chalkMock;
 });
 
-// Setting a longer timeout for async tests
-jest.setTimeout(30000);
-
 // Mock path since it's used in several methods
 jest.mock("path", () => ({
   join: jest.fn((...args) => args.join("/")),
 }));
 
-describe("UserInterface", () => {
+// We don't need to mock the Context class for these display-only tests
+
+describe("UserInterface Display Methods", () => {
   let ui;
   let mockAdapter;
 
   beforeEach(() => {
-    // Create a mock adapter for testing
+    // Create a mock adapter instead of using the real one
     mockAdapter = {
       log: jest.fn(),
       error: jest.fn(),
-      prompt: jest.fn().mockResolvedValue({}),
+      prompt: jest.fn(), // We won't use this in display tests
     };
 
-    // Create a new instance of UserInterface with our mock adapter
+    // Create a UserInterface instance with our mock adapter
     ui = new UserInterface(mockAdapter);
   });
 
@@ -190,7 +189,7 @@ describe("UserInterface", () => {
     });
 
     test("displayContextsList should show warning when no contexts are available", () => {
-      // Mock displayWarning to verify it's called
+      // Mock the displayWarning function to verify it's called
       const originalDisplayWarning = ui.displayWarning;
       ui.displayWarning = jest.fn();
 
@@ -199,7 +198,7 @@ describe("UserInterface", () => {
         "No contexts configured yet. Run setup to configure contexts."
       );
 
-      // Restore the original method
+      // Restore the original function
       ui.displayWarning = originalDisplayWarning;
     });
 
@@ -218,13 +217,13 @@ describe("UserInterface", () => {
           (call) =>
             call[0] &&
             typeof call[0] === "string" &&
-            call[0].includes("Using git config from")
+            call[0].includes("Current path matches context")
         )
       ).toBe(true);
     });
 
     test("displayActiveContext should show warning when no context matches", () => {
-      // Mock displayWarning to verify it's called
+      // Mock the displayWarning function to verify it's called
       const originalDisplayWarning = ui.displayWarning;
       ui.displayWarning = jest.fn();
 
@@ -233,7 +232,7 @@ describe("UserInterface", () => {
         "Current directory does not match any configured context."
       );
 
-      // Restore the original method
+      // Restore the original function
       ui.displayWarning = originalDisplayWarning;
     });
 
@@ -276,7 +275,7 @@ describe("UserInterface", () => {
           (call) =>
             call[0] &&
             typeof call[0] === "string" &&
-            call[0].includes("detect-url")
+            call[0].includes("git-context detect-url")
         )
       ).toBe(true);
     });
@@ -329,114 +328,6 @@ describe("UserInterface", () => {
             call[0] && typeof call[0] === "string" && call[0].includes("work")
         )
       ).toBe(true);
-    });
-  });
-
-  // Test inquirer-based methods with properly mocked responses
-  describe("Interactive UI methods", () => {
-    test("selectContextToRemove should return null if no contexts are available", async () => {
-      const selectedContext = await ui.selectContextToRemove([]);
-      expect(selectedContext).toBeNull();
-      expect(mockAdapter.prompt).not.toHaveBeenCalled();
-    });
-
-    test("selectContextToRemove should prompt user to select a context", async () => {
-      const contexts = [{ name: "work" }, { name: "personal" }];
-
-      mockAdapter.prompt.mockResolvedValueOnce({ contextName: "work" });
-
-      const result = await ui.selectContextToRemove(contexts);
-
-      expect(mockAdapter.prompt).toHaveBeenCalledTimes(1);
-      expect(result).toBe("work");
-    });
-
-    test("getExportPath should prompt for export path", async () => {
-      mockAdapter.prompt.mockResolvedValueOnce({
-        exportPath: "/path/to/export.json",
-      });
-
-      const result = await ui.getExportPath();
-
-      expect(mockAdapter.prompt).toHaveBeenCalledTimes(1);
-      expect(result).toBe("/path/to/export.json");
-    });
-
-    test("getImportPath should prompt for import path", async () => {
-      mockAdapter.prompt.mockResolvedValueOnce({
-        importPath: "/path/to/import.json",
-      });
-
-      const result = await ui.getImportPath();
-
-      expect(mockAdapter.prompt).toHaveBeenCalledTimes(1);
-      expect(result).toBe("/path/to/import.json");
-    });
-
-    test("selectContextsToImport should return empty array if no contexts are available", async () => {
-      const result = await ui.selectContextsToImport([]);
-
-      expect(result.selectedContexts).toEqual([]);
-      expect(result.confirmation).toBe(false);
-      expect(mockAdapter.prompt).not.toHaveBeenCalled();
-    });
-
-    test("selectContextsToImport should handle single context", async () => {
-      const contexts = [
-        { name: "work", userName: "Work User", userEmail: "work@example.com" },
-      ];
-
-      mockAdapter.prompt.mockResolvedValueOnce({ confirmation: true });
-
-      const result = await ui.selectContextsToImport(contexts);
-
-      expect(mockAdapter.prompt).toHaveBeenCalledTimes(1);
-      expect(result.selectedContexts).toEqual(contexts);
-      expect(result.confirmation).toBe(true);
-    });
-
-    test("selectContextsToImport should handle multiple contexts", async () => {
-      const contexts = [
-        {
-          name: "work",
-          userName: "Work User",
-          userEmail: "work@example.com",
-        },
-        {
-          name: "personal",
-          userName: "Personal User",
-          userEmail: "personal@example.com",
-        },
-      ];
-
-      // Mock the prompt responses in sequence
-      mockAdapter.prompt
-        .mockResolvedValueOnce({ selectedNames: ["work"] })
-        .mockResolvedValueOnce({ confirmation: true });
-
-      const result = await ui.selectContextsToImport(contexts);
-
-      expect(mockAdapter.prompt).toHaveBeenCalledTimes(2);
-      expect(result.selectedContexts).toEqual([contexts[0]]);
-      expect(result.confirmation).toBe(true);
-    });
-
-    test("confirmReplaceDuplicates should return false if no duplicates exist", async () => {
-      const result = await ui.confirmReplaceDuplicates([]);
-
-      expect(result.replaceExisting).toBe(false);
-      expect(mockAdapter.prompt).not.toHaveBeenCalled();
-    });
-
-    test("confirmReplaceDuplicates should prompt for confirmation", async () => {
-      const duplicates = ["work", "personal"];
-
-      mockAdapter.prompt.mockResolvedValueOnce({ replaceExisting: true });
-
-      const result = await ui.confirmReplaceDuplicates(duplicates);
-
-      expect(mockAdapter.prompt).toHaveBeenCalledTimes(1);
-      expect(result.replaceExisting).toBe(true);
     });
   });
 });

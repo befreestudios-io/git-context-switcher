@@ -6,39 +6,19 @@ Git Context Switcher is a tool that helps users switch between different Git con
 
 ## Current Status
 
-- Version 1.0.0 published to npm
-- Basic functionality implemented
-- File system operations working properly
+- Version 1.1.0 released with new features
+- Automatic context detection based on repository URL implemented
+- Context templates for quick setup added
+- Export/import contexts for sharing capability added
 - Tests are in place
 
 ## Next Steps
 
-### High Priority
+1. **✅ Feature Enhancements** (v1.1.0) - COMPLETED
 
-1. **Complete FileSystem service improvements**
-
-   - Finish error handling improvements in the `_ensureTestDirectories` method
-   - Add better error messaging for permission issues
-   - Implement file locking for concurrent operations
-
-2. **Documentation Enhancement**
-
-   - Update README with more detailed examples
-   - Add troubleshooting section
-   - Document all available commands and options
-
-3. **Testing**
-   - Increase test coverage (aim for >80%)
-   - Add more integration tests
-   - Add tests for edge cases around file permissions
-
-### Medium Priority
-
-1. **Feature Enhancements** (v1.1.0)
-
-   - Add support for automatic context detection based on repository URL
-   - Implement context templates for quick setup
-   - Add ability to export/import contexts for sharing
+   - ✅ Add support for automatic context detection based on repository URL
+   - ✅ Implement context templates for quick setup
+   - ✅ Add ability to export/import contexts for sharing
 
 2. **Performance Improvements** (v1.2.0)
 

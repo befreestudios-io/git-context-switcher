@@ -47,6 +47,27 @@ program
   .description("Apply configuration based on current directory")
   .action(() => switcher.applyContext());
 
+// New commands for 1.1.0 features
+program
+  .command("detect-url")
+  .description("Detect context based on repository URL")
+  .action(() => switcher.detectContextFromUrl());
+
+program
+  .command("templates")
+  .description("List available context templates")
+  .action(() => switcher.listTemplates());
+
+program
+  .command("export")
+  .description("Export contexts to a file")
+  .action(() => switcher.exportContexts());
+
+program
+  .command("import")
+  .description("Import contexts from a file")
+  .action(() => switcher.importContexts());
+
 program.parse(process.argv);
 
 // Show help if no command provided

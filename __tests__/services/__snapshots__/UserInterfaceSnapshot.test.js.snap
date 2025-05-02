@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`UserInterface Snapshots displaySetupInfo output snapshot 1`] = `
+"
+Let's set up your Git contexts. For each context, you'll need to provide:
+  - A name (e.g., "personal", "work")
+  - A path pattern to match repositories for this context (e.g., "~/personal/**")
+  - User details (name, email) for the context"
+`;

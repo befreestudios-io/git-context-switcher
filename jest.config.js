@@ -8,7 +8,7 @@ export default {
   moduleFileExtensions: ["js", "json", "node"],
   // Module name mapper for ES modules
   moduleNameMapper: {
-    "^../../lib/utils/security.js$": "<rootDir>/lib/utils/security.js"
+    "^../../lib/utils/security.js$": "<rootDir>/lib/utils/security.js",
   },
   // Transforms
   transform: {},
@@ -22,5 +22,7 @@ export default {
   // Setup files
   setupFilesAfterEnv: ["./__tests__/setup.js"],
   // Verbose output
-  verbose: true
-}
+  verbose: true,
+  // Ensure modules are processed correctly
+  transformIgnorePatterns: ["node_modules/(?!(.*))"],
+};
