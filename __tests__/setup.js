@@ -14,6 +14,9 @@ import {
   mockAccess,
   mockPathExists,
   mockFs,
+  mockFileExists,
+  mockDirExists,
+  mockSuccessfulFileOps,
 } from "./utils/testUtils/fsTestUtils.js";
 
 import { mockExec, mockExecSync } from "./utils/testUtils/execTestUtils.js";
@@ -77,6 +80,11 @@ jest.mock("../lib/models/Context.js", () => ({
   },
 }));
 
+// Set up default successful file operations
+mockFileExists();
+mockDirExists();
+mockSuccessfulFileOps();
+
 // Mock external modules
 jest.mock("fs-extra", () => mockFs);
 jest.mock("fs", () => ({
@@ -86,6 +94,7 @@ jest.mock("fs", () => ({
   statSync: mockFs.statSync,
   writeFileSync: mockFs.writeFileSync,
   existsSync: mockFs.pathExistsSync,
+  renameSync: mockFs.renameSync,
   constants: {
     F_OK: 0,
     R_OK: 4,

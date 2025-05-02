@@ -25,6 +25,7 @@ export const mockWriteJson = jest.fn();
 export const mockUnlink = jest.fn();
 export const mockRemove = jest.fn();
 export const mockAccess = jest.fn();
+export const mockRenameSync = jest.fn();
 
 // Mock the entire fs module
 export const mockFs = {
@@ -47,6 +48,7 @@ export const mockFs = {
   unlink: mockUnlink,
   remove: mockRemove,
   existsSync: mockPathExistsSync, // Alias for compatibility
+  renameSync: mockRenameSync,
   constants: {
     F_OK: 0,
     R_OK: 4,
@@ -71,6 +73,7 @@ export function setupFsMocks() {
     statSync: mockStatSync,
     writeFileSync: mockWriteFileSync,
     existsSync: mockPathExistsSync,
+    renameSync: mockRenameSync,
     constants: mockFs.constants,
   }));
 
@@ -93,7 +96,27 @@ export function resetFsMocks() {
  */
 export function mockFileExists() {
   mockPathExists.mockResolvedValue(true);
+  mockPathExistsSync.mockReturnValue(true);
   mockAccessSync.mockImplementation(() => true);
+  mockAccess.mockImplementation((path, mode, callback) => {
+    if (callback) callback(null);
+    return Promise.resolve();
+  });
+  mockStatSync.mockImplementation(() => ({ isDirectory: () => false }));
+}
+
+/**
+ * Mock successful directory existence checks
+ */
+export function mockDirExists() {
+  mockPathExists.mockResolvedValue(true);
+  mockPathExistsSync.mockReturnValue(true);
+  mockAccessSync.mockImplementation(() => true);
+  mockAccess.mockImplementation((path, mode, callback) => {
+    if (callback) callback(null);
+    return Promise.resolve();
+  });
+  mockStatSync.mockImplementation(() => ({ isDirectory: () => true }));
 }
 
 /**
@@ -104,7 +127,15 @@ export function mockFileNotFound() {
   error.code = "ENOENT";
 
   mockPathExists.mockResolvedValue(false);
+  mockPathExistsSync.mockReturnValue(false);
   mockAccessSync.mockImplementation(() => {
+    throw error;
+  });
+  mockAccess.mockImplementation((path, mode, callback) => {
+    if (callback) callback(error);
+    return Promise.reject(error);
+  });
+  mockStatSync.mockImplementation(() => {
     throw error;
   });
 }
@@ -119,4 +150,29 @@ export function mockPermissionDenied() {
   mockAccessSync.mockImplementation(() => {
     throw error;
   });
+  mockAccess.mockImplementation((path, mode, callback) => {
+    if (callback) callback(error);
+    return Promise.reject(error);
+  });
+}
+
+/**
+ * Mock successful file operations
+ */
+export function mockSuccessfulFileOps() {
+  mockMkdir.mockResolvedValue(undefined);
+  mockEnsureDir.mockResolvedValue(undefined);
+  mockWriteFile.mockResolvedValue(undefined);
+  mockReadFile.mockResolvedValue("mock file content");
+  mockCopy.mockResolvedValue(undefined);
+  mockRemove.mockResolvedValue(undefined);
+  mockReadJson.mockResolvedValue([]);
+  mockWriteJson.mockResolvedValue(undefined);
+
+  // Sync versions
+  mockMkdirSync.mockReturnValue(undefined);
+  mockEnsureDirSync.mockReturnValue(undefined);
+  mockWriteFileSync.mockReturnValue(undefined);
+  mockOutputFileSync.mockReturnValue(undefined);
+  mockRenameSync.mockReturnValue(undefined);
 }
