@@ -1,4 +1,4 @@
-# Git Context Switcher
+# Git Context Switcher <img src="assets/logo_concept.png" alt="Git Context Switcher Logo" width="200" align="right">
 
 [![CI](https://github.com/befreestudios-io/git-context-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/befreestudios-io/git-context-switcher/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/befreestudios-io/git-context-switcher/graph/badge.svg?token=5B3VS4IIVF)](https://codecov.io/gh/befreestudios-io/git-context-switcher)
@@ -6,6 +6,20 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Switch between git contexts easily for different environments (personal, work, client projects, etc.) using Git's conditional includes.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+  - [Command Reference](docs/COMMANDS.md)
+  - [Usage Examples](docs/EXAMPLES.md)
+  - [How It Works](docs/HOW_IT_WORKS.md)
+  - [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Contributing](#contributing)
+- [License](#license)
+- [Security](#security)
 
 ## Features
 
@@ -79,7 +93,7 @@ chmod +x index.js
 npm link
 ```
 
-## Usage
+## Quick Start
 
 ### Setup Wizard
 
@@ -96,426 +110,29 @@ The wizard will:
 3. Guide you through setting up multiple contexts
 4. Update your main `.gitconfig` with conditional includes
 
-### Command Reference
+### Basic Usage
 
-Here's a complete reference of all available commands and their options:
-
-#### Setup Command
+Once set up, Git will automatically use the correct identity based on your repository location. You can also use these commands:
 
 ```bash
-git-context setup [options]
-```
+# List all your configured contexts
+git-context list
 
-Initialize and configure git contexts with an interactive wizard.
-
-Options:
-
-- `--force` - Override existing configuration
-- `--quiet` - Reduce console output
-
-Example:
-
-```bash
-# Run setup with minimal output
-git-context setup --quiet
-```
-
-#### Add Command
-
-```bash
-git-context add [options]
-```
-
-Add a new git context configuration.
-
-Options:
-
-- `--name <name>` - Context name
-- `--path <path>` - Repository path pattern
-- `--user-name <name>` - Git user name
-- `--user-email <email>` - Git user email
-- `--signing-key <key>` - GPG signing key
-- `--no-interactive` - Skip interactive prompts
-
-Example:
-
-```bash
-# Add a new context non-interactively
-git-context add --name work --path ~/work/ --user-name "Work User" --user-email "work@example.com"
-```
-
-#### Remove Command
-
-```bash
-git-context remove [options]
-```
-
-Remove an existing git context.
-
-Options:
-
-- `--name <name>` - Context name to remove
-- `--no-interactive` - Skip confirmation prompt
-
-Example:
-
-```bash
-# Remove a context without confirmation
-git-context remove --name old-client --no-interactive
-```
-
-#### List Command
-
-```bash
-git-context list [options]
-```
-
-List all configured contexts.
-
-Options:
-
-- `--format <format>` - Output format (text, json)
-
-Example:
-
-```bash
-# List contexts in JSON format
-git-context list --format json
-```
-
-#### Apply Command
-
-```bash
-git-context apply [options]
-```
-
-Check which context applies to the current directory.
-
-Options:
-
-- `--detail` - Show detailed configuration
-
-Example:
-
-```bash
-# Show detailed context information for current directory
-git-context apply --detail
-```
-
-#### Detect URL Command (New in v1.1.0)
-
-```bash
-git-context detect-url [options]
-```
-
-Detect the appropriate context based on the repository remote URL.
-
-Options:
-
-- `--remote <name>` - Specify remote name (default: origin)
-
-Example:
-
-```bash
-# Detect context using upstream remote instead of origin
-git-context detect-url --remote upstream
-```
-
-#### Templates Command (New in v1.1.0)
-
-```bash
-git-context templates
-```
-
-List available context templates for quick setup.
-
-Example:
-
-```bash
-# View all available templates
-git-context templates
-```
-
-#### Export Command (New in v1.1.0)
-
-```bash
-git-context export [options]
-```
-
-Export your contexts to a JSON file for sharing or backup.
-
-Options:
-
-- `--file <path>` - Specify output file path (default: ./git-contexts-export.json)
-- `--no-interactive` - Skip interactive prompts
-
-Example:
-
-```bash
-# Export to a custom location
-git-context export --file ~/backups/my-contexts.json
-```
-
-#### Import Command (New in v1.1.0)
-
-```bash
-git-context import [options]
-```
-
-Import contexts from a JSON file.
-
-Options:
-
-- `--file <path>` - Specify import file path
-- `--merge` - Merge with existing contexts (default behavior)
-- `--replace` - Replace existing contexts with same names
-- `--no-interactive` - Skip interactive prompts
-
-Example:
-
-```bash
-# Import contexts and replace any with the same names
-git-context import --file ~/shared-configs/team-contexts.json --replace
-```
-
-### Detailed Examples
-
-#### Example 1: Setting up personal and work contexts
-
-```bash
-# Run the setup wizard
-git-context setup
-
-# Enter personal context details
-# Name: personal
-# Path: ~/personal/
-# User Name: Your Name
-# User Email: your.email@personal.com
-# (Optional) GPG Signing Key: ABC123DEF456
-
-# Enter work context details
-# Name: work
-# Path: ~/work/
-# User Name: Your Work Name
-# User Email: your.name@company.com
-# (Optional) GPG Signing Key: DEF456GHI789
-```
-
-This setup will:
-
-1. Create `~/.gitconfig.d/personal.gitconfig` containing:
-
-   ```
-   [user]
-       name = Your Name
-       email = your.email@personal.com
-       signingkey = ABC123DEF456
-   ```
-
-2. Create `~/.gitconfig.d/work.gitconfig` containing:
-
-   ```
-   [user]
-       name = Your Work Name
-       email = your.name@company.com
-       signingkey = DEF456GHI789
-   ```
-
-3. Add to your main `~/.gitconfig`:
-
-   ```
-   [includeIf "gitdir:~/personal/"]
-       path = ~/.gitconfig.d/personal.gitconfig
-
-   [includeIf "gitdir:~/work/"]
-       path = ~/.gitconfig.d/work.gitconfig
-   ```
-
-#### Example 2: Working with multiple client contexts
-
-```bash
-# Add a client context
-git-context add --name client1 --path ~/clients/client1/ --user-name "Your Name" --user-email "you@client1.com"
-
-# Add another client context
-git-context add --name client2 --path ~/clients/client2/ --user-name "Your Name" --user-email "you@client2.com"
-
-# Later, remove a client when no longer needed
-git-context remove --name client1
-```
-
-#### Example 3: Using repository URL detection (New in v1.1.0)
-
-```bash
-# First, configure contexts with URL patterns
-git-context add
-
-# During the interactive setup:
-# Name: github-personal
-# Path Pattern: ~/repos/personal/**
-# User Name: Your Name
-# User Email: personal@example.com
-# Add URL Patterns? Yes
-# URL Pattern: github.com/your-username/*
-# URL Pattern: <press Enter to finish>
-
-# Add another context for work
-git-context add
-
-# Name: github-work
-# Path Pattern: ~/repos/work/**
-# User Name: Your Work Name
-# User Email: you@company.com
-# Add URL Patterns? Yes
-# URL Pattern: github.com/company-org/*
-# URL Pattern: <press Enter to finish>
-
-# Now in any git repository, you can detect the context based on the remote URL
-cd ~/projects/any-location/company-project/
-git-context detect-url
-# This will show: "Repository URL matches context: github-work"
-```
-
-This example demonstrates how Git Context Switcher can automatically use the right identity based on the remote repository URL, regardless of where the repository is located on your filesystem.
-
-#### Example 4: Using templates and import/export (New in v1.1.0)
-
-```bash
-# List available templates
-git-context templates
-
-# Add a new context using a template
-git-context add
-# Select "Use a template? Yes"
-# Select template: personal
-# Enter name: my-personal
-# Enter path pattern: ~/projects/**
-# Enter user name and email
-
-# Export your contexts to share with teammates or use on another machine
-git-context export
-# Enter export path: ./my-contexts.json
-
-# On another machine, import your contexts
-git-context import
-# Enter import path: ./my-contexts.json
-# Select contexts to import
-# Choose whether to replace existing contexts with same names
-```
-
-This allows you to quickly set up consistent contexts across different machines and share standard configurations with team members.
-
-## Troubleshooting
-
-### Common Issues
-
-#### Permission Errors
-
-**Issue**: "Permission denied" errors when running the tool.
-
-**Solution**: Ensure you have read and write permissions for your home directory and `.gitconfig` file.
-
-```bash
-# Check permissions
-ls -la ~/.gitconfig
-ls -la ~/.gitconfig.d
-
-# Fix permissions if needed
-chmod 600 ~/.gitconfig
-chmod 700 ~/.gitconfig.d
-```
-
-#### Context Not Applied
-
-**Issue**: Git is not using the correct context configuration.
-
-**Solution**: Check that your repository path matches the pattern defined in your context.
-
-```bash
-# Check which context applies
+# Check which context applies to the current directory
 git-context apply
 
-# If needed, update your context with a more specific path
-git-context add --name work --path ~/exact/path/to/work/repos/ --user-name "Work User" --user-email "work@example.com"
+# Add a new context
+git-context add
 ```
 
-#### Merge Conflicts in .gitconfig
+## Documentation
 
-**Issue**: Git shows merge conflicts in your `.gitconfig` file.
+For more detailed information, please see the following documentation:
 
-**Solution**: The context switcher made changes to your config that conflict with other changes. Manually resolve the conflicts:
-
-1. Check your backup config file (created automatically by the tool)
-2. Manually merge the changes preserving both your modifications and the conditional includes
-
-#### Invalid Context Configuration
-
-**Issue**: Error message about invalid configuration when adding a context.
-
-**Solution**: Ensure your repository path pattern is valid and follows Git's pattern syntax:
-
-```bash
-# Use absolute paths with correct syntax
-git-context add --name personal --path "/Users/username/personal/**"
-
-# On Windows use proper path format
-git-context add --name work --path "C:/Users/username/work/**"
-```
-
-### Fixing Misconfigured Contexts
-
-If your contexts are misconfigured, you can:
-
-1. List all contexts to identify issues:
-
-   ```bash
-   git-context list
-   ```
-
-2. Remove problematic contexts:
-
-   ```bash
-   git-context remove --name problem-context
-   ```
-
-3. Add them back with correct settings:
-
-   ```bash
-   git-context add --name fixed-context --path correct/path/ --user-name "Name" --user-email "email@example.com"
-   ```
-
-4. If all else fails, you can start fresh:
-   ```bash
-   git-context setup --force
-   ```
-
-## How It Works
-
-Git Context Switcher uses Git's [conditional includes](https://git-scm.com/docs/git-config#_conditional_includes) feature to apply different configurations based on the repository path.
-
-For example, if you have:
-
-- Personal projects in `~/personal/`
-- Work projects in `~/work/`
-
-The tool will create:
-
-1. A `.gitconfig.d` directory with separate config files:
-
-   - `.gitconfig.d/personal.gitconfig`
-   - `.gitconfig.d/work.gitconfig`
-
-2. Add these conditional includes to your main `.gitconfig`:
-
-   ```
-   [includeIf "gitdir:~/personal/**"]
-       path = ~/.gitconfig.d/personal.gitconfig
-
-   [includeIf "gitdir:~/work/**"]
-       path = ~/.gitconfig.d/work.gitconfig
-   ```
-
-When you work in different repositories, Git automatically applies the correct configuration based on the repository path.
+- [Command Reference](docs/COMMANDS.md) - Complete reference for all commands and options
+- [Usage Examples](docs/EXAMPLES.md) - Detailed examples showing common use cases
+- [How It Works](docs/HOW_IT_WORKS.md) - Technical explanation of how the tool works
+- [Troubleshooting](docs/TROUBLESHOOTING.md) - Solutions for common issues
 
 ## Versioning
 

@@ -41,6 +41,11 @@ jest.mock("path", () => ({
   join: jest.fn((...args) => args.join("/")),
 }));
 
+// Mock fs module to avoid reading actual files
+jest.mock("fs", () => ({
+  readFileSync: jest.fn(() => "Mock ASCII Logo"),
+}));
+
 describe("UserInterface", () => {
   let ui;
   let mockAdapter;
@@ -55,6 +60,9 @@ describe("UserInterface", () => {
 
     // Create a new instance of UserInterface with our mock adapter
     ui = new UserInterface(mockAdapter);
+
+    // Mock the displayLogo method to prevent it from affecting our tests
+    ui.displayLogo = jest.fn();
   });
 
   afterEach(() => {
