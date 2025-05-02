@@ -84,7 +84,7 @@ jobs:
           script: |
             const { repo, owner } = context.repo;
             const version = '${{ steps.extract_version.outputs.VERSION }}';
-            const isPrerelease = ${{ steps.check_prerelease.outputs.IS_PRERELEASE }};
+            const isPrerelease = ${{ steps.check_prerelease.outputs.IS_PRERELEASE }} === 'true';
 
             const release = await github.rest.repos.createRelease({
               owner,
