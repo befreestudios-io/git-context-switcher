@@ -2,6 +2,9 @@ name: Release
 
 # Release by pushing a version tag:
 #   npm version <major|minor|patch> && git push --follow-tags
+#
+# The package is *staged*, not published: it goes live only after you approve
+# it with 2FA (npm stage approve). See RELEASING.md.
 on:
   push:
     tags: ["v*.*.*"]
@@ -58,18 +61,30 @@ jobs:
             exit 1
           fi
 
-      - name: Publish to npm
+      - name: Stage on npm
         env:
           TAG: ${{ github.ref_name }}
         run: |
           # Prereleases (v2.1.0-beta.1) go to the "next" dist-tag, not "latest".
-          if [[ "$TAG" == *-* ]]; then npm publish --tag next; else npm publish; fi
+          if [[ "$TAG" == *-* ]]; then npm stage publish --tag next; else npm stage publish; fi
 
-      - name: Create GitHub release
+      # A draft, so it can't announce a version that isn't live on npm yet.
+      - name: Create draft GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
           FLAGS=()
           if [[ "$TAG" == *-* ]]; then FLAGS+=(--prerelease); fi
-          gh release create "$TAG" --title "$TAG" --notes-file notes.md --verify-tag "${FLAGS[@]}"
+          gh release create "$TAG" --draft --title "$TAG" --notes-file notes.md --verify-tag "${FLAGS[@]}"
+
+      - name: Next steps
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          {
+            echo "### $TAG is staged, not live yet"
+            echo
+            echo '1. `npm stage list git-context-switcher` and `npm stage approve <stage-id>` (asks for your 2FA code)'
+            echo "2. \`gh release edit $TAG --draft=false\` (or publish the draft on GitHub)"
+          } >> "$GITHUB_STEP_SUMMARY"
