@@ -1,12 +1,24 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: npm
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
     open-pull-requests-limit: 10
     versioning-strategy: increase
-    labels:
-      - "npm"
-      - "dependencies"
-      - "security"
+    labels: [dependencies]
+    groups:
+      # One PR for routine dev-tool bumps instead of one per package.
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+
+  # Keeps the action versions in .github/workflows current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, github-actions]
+    groups:
+      actions:
+        patterns: ["*"]

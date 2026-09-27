@@ -1,157 +1,75 @@
-name: Release Management
+name: Release
 
+# Release by pushing a version tag:
+#   npm version <major|minor|patch> && git push --follow-tags
 on:
-  workflow_dispatch:
-    inputs:
-      releaseType:
-        description: "Release type (patch|minor|major)"
-        required: true
-        default: "patch"
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
-      prerelease:
-        description: "Pre-release label (leave empty for stable release)"
-        required: false
-        type: string
+  push:
+    tags: ["v*.*.*"]
 
-# Add explicit permissions needed for release management
 permissions:
-  contents: write # For creating branches and commits
-  pull-requests: write # For creating pull requests
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  prepare-release:
+  publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # create the GitHub release
+      id-token: write # npm trusted publishing (OIDC); no NPM_TOKEN needed
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
         with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          node-version: 24
+          registry-url: https://registry.npmjs.org
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "20"
-          cache: "npm"
+      # Trusted publishing needs a recent npm 11.
+      - run: npm install -g npm@11
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npm run check
 
-      - name: Configure Git
+      - name: Tag matches package.json
+        env:
+          TAG: ${{ github.ref_name }}
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-      - name: Get current version
-        id: current_version
-        run: echo 'CURRENT_VERSION=$(node -p "require(\"./package.json\").version")' >> $GITHUB_OUTPUT
-
-      - name: Calculate new version
-        id: new_version
-        run: |
-          CURRENT=${{ steps.current_version.outputs.CURRENT_VERSION }}
-          TYPE=${{ github.event.inputs.releaseType }}
-          PRERELEASE='${{ github.event.inputs.prerelease }}'
-
-          # Split current version
-          IFS='.' read -r MAJOR MINOR PATCH <<< "${CURRENT}"
-          # Remove any prerelease suffix from patch
-          PATCH=$(echo $PATCH | sed -E 's/-[a-zA-Z0-9\.\-]+$//')
-
-          # Calculate new version
-          if [[ "$TYPE" == "major" ]]; then
-            MAJOR=$((MAJOR + 1))
-            MINOR=0
-            PATCH=0
-          elif [[ "$TYPE" == "minor" ]]; then
-            MINOR=$((MINOR + 1))
-            PATCH=0
-          else
-            PATCH=$((PATCH + 1))
+          EXPECTED="v$(node -p 'require("./package.json").version')"
+          if [ "$TAG" != "$EXPECTED" ]; then
+            echo "::error::Tag $TAG doesn't match package.json ($EXPECTED)"
+            exit 1
           fi
 
-          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-
-          # Add prerelease label if provided
-          if [[ -n "$PRERELEASE" ]]; then
-            NEW_VERSION="${NEW_VERSION}-${PRERELEASE}"
+      - name: Release notes from CHANGELOG.md
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          awk -v heading="## [${TAG#v}]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::CHANGELOG.md has no '## [${TAG#v}]' section"
+            exit 1
           fi
 
-          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
-          echo "New version will be: ${NEW_VERSION}"
-
-      - name: Update package.json version
+      - name: Publish to npm
+        env:
+          TAG: ${{ github.ref_name }}
         run: |
-          NEW_VERSION=${{ steps.new_version.outputs.NEW_VERSION }}
-          npx json -I -f package.json -e "this.version=\"$NEW_VERSION\""
+          # Prereleases (v2.1.0-beta.1) go to the "next" dist-tag, not "latest".
+          if [[ "$TAG" == *-* ]]; then npm publish --tag next; else npm publish; fi
 
-      - name: Update CHANGELOG.md
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
         run: |
-          NEW_VERSION=${{ steps.new_version.outputs.NEW_VERSION }}
-          RELEASE_TYPE=${{ github.event.inputs.releaseType }}
-          CURRENT_DATE=$(date +"%Y-%m-%d")
-
-          # Prepare header for new version
-          NEW_VERSION_HEADER="## [${NEW_VERSION}] - ${CURRENT_DATE}\n\n"
-
-          # Add appropriate section based on release type
-          if [[ "$RELEASE_TYPE" == "major" ]]; then
-            SECTIONS="### Breaking Changes\n\n- \n\n### Added\n\n- \n\n### Changed\n\n- \n\n### Fixed\n\n- \n\n"
-          elif [[ "$RELEASE_TYPE" == "minor" ]]; then
-            SECTIONS="### Added\n\n- \n\n### Changed\n\n- \n\n### Fixed\n\n- \n\n"
-          else
-            SECTIONS="### Fixed\n\n- \n\n"
-          fi
-
-          # Read existing CHANGELOG content
-          CHANGELOG_CONTENT=$(cat CHANGELOG.md)
-
-          # Find the position after the header (first ## line)
-          HEADER_PATTERN="All notable changes to this project will be documented in this file."
-          HEADER_POSITION=$(echo "$CHANGELOG_CONTENT" | grep -n "$HEADER_PATTERN" | cut -d: -f1)
-          INSERT_POSITION=$((HEADER_POSITION + 2))
-
-          # Insert new version section
-          NEW_CONTENT=$(echo "$CHANGELOG_CONTENT" | head -n $INSERT_POSITION)
-          NEW_CONTENT="${NEW_CONTENT}${NEW_VERSION_HEADER}${SECTIONS}"
-          NEW_CONTENT="${NEW_CONTENT}$(echo "$CHANGELOG_CONTENT" | tail -n +$((INSERT_POSITION + 1)))"
-
-          # Update the link at the bottom of the file
-          LINK_LINE="\[${NEW_VERSION}\]: https://github.com/befreestudios-io/git-context-switcher/releases/tag/v${NEW_VERSION}"
-          NEW_CONTENT="${NEW_CONTENT}\n${LINK_LINE}"
-
-          # Write back to file
-          echo -e "$NEW_CONTENT" > CHANGELOG.md
-
-      - name: Create Pull Request
-        id: create_pr
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: prepare release ${{ steps.new_version.outputs.NEW_VERSION }}"
-          title: "Release ${{ steps.new_version.outputs.NEW_VERSION }}"
-          body: |
-            # Release ${{ steps.new_version.outputs.NEW_VERSION }} (${{ github.event.inputs.releaseType }})
-
-            This PR prepares the release of version ${{ steps.new_version.outputs.NEW_VERSION }}.
-
-            ## Next steps:
-
-            1. Review the changes in this PR
-            2. Update the CHANGELOG.md with meaningful release notes (the template has been generated based on the release type)
-            3. Merge this PR
-            4. A GitHub release will be automatically created
-            5. The npm package will be published automatically
-          labels: release
-          branch: release/${{ steps.new_version.outputs.NEW_VERSION }}
-          base: ${{ github.repository_default_branch }}
-
-      - name: PR Details
-        if: ${{ steps.create_pr.outputs.pull-request-number }}
-        run: |
-          echo "Pull request created: ${{ steps.create_pr.outputs.pull-request-url }}"
-          echo "Please review the changes, update the CHANGELOG.md with meaningful notes, and merge the PR to trigger the release."
+          FLAGS=()
+          if [[ "$TAG" == *-* ]]; then FLAGS+=(--prerelease); fi
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md --verify-tag "${FLAGS[@]}"
