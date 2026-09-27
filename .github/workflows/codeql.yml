@@ -7,6 +7,7 @@ on:
     branches: [main]
   schedule:
     - cron: "23 15 * * 4"
+  workflow_dispatch: # manual scan, e.g. before tagging a release
 
 permissions:
   contents: read
