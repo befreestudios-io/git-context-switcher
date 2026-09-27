@@ -1,46 +1,47 @@
 {
   "name": "git-context-switcher",
-  "version": "1.1.1",
-  "description": "Switch between git contexts for different environments (personal, work, etc.)",
+  "version": "2.0.0",
+  "description": "Per-directory and per-remote git identities (author, SSH key, signing), built on git's native includeIf",
   "type": "module",
-  "main": "index.js",
   "bin": {
     "git-context": "./index.js"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=22.13.0"
   },
+  "files": [
+    "index.js",
+    "lib/"
+  ],
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "lint": "eslint --ext .js .",
-    "prepare": "npm run lint",
-    "prepublishOnly": "npm test"
+    "test": "node --test \"test/**/*.test.js\"",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=lib/** --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info \"test/**/*.test.js\"",
+    "lint": "eslint .",
+    "typecheck": "tsc -p .",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "prepublishOnly": "npm run check"
   },
   "keywords": [
     "git",
     "config",
-    "context",
-    "conditional",
-    "include",
-    "multi-profile"
+    "identity",
+    "includeIf",
+    "multi-account",
+    "ssh",
+    "commit-signing"
   ],
   "author": "Burton Podczerwinski <befreestudios@gmail.com> (https://github.com/befreestudios-io)",
   "license": "MIT",
   "dependencies": {
-    "chalk": "^5.4.1",
-    "commander": "^13.1.0",
-    "fs-extra": "^11.3.0",
-    "inquirer": "^12.5.2",
-    "tmp": "^0.2.3"
+    "@inquirer/prompts": "^8.7.2",
+    "commander": "^15.0.0"
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.26.9",
-    "@eslint/js": "^9.24.0",
-    "eslint": "^9.24.0",
-    "eslint-plugin-security": "^3.0.1",
-    "jest": "^29.7.0"
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.4",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "typescript": "^7.0.2"
   },
   "repository": {
     "type": "git",
@@ -52,9 +53,5 @@
   "homepage": "https://github.com/befreestudios-io/git-context-switcher",
   "publishConfig": {
     "access": "public"
-  },
-  "files": [
-    "index.js",
-    "lib/**/*"
-  ]
+  }
 }

@@ -1,128 +1,71 @@
-# Usage Examples
+# Examples
 
-This document provides detailed examples of common use cases for Git Context Switcher.
-
-## Example 1: Setting up personal and work contexts
+## Personal and work, split by folder
 
 ```bash
-# Run the setup wizard
-git-context setup
-
-# Enter personal context details
-# Name: personal
-# Path: ~/personal/
-# User Name: Your Name
-# User Email: your.email@personal.com
-# (Optional) GPG Signing Key: ABC123DEF456
-
-# Enter work context details
-# Name: work
-# Path: ~/work/
-# User Name: Your Work Name
-# User Email: your.name@company.com
-# (Optional) GPG Signing Key: DEF456GHI789
+git-context add personal --dir ~/personal --email me@home.io -y
+git-context add work --dir ~/work --email me@acme.io -y
 ```
 
-This setup will:
+## Work repos cloned anywhere
 
-1. Create `~/.gitconfig.d/personal.gitconfig` containing:
-
-   ```
-   [user]
-       name = Your Name
-       email = your.email@personal.com
-       signingkey = ABC123DEF456
-   ```
-
-2. Create `~/.gitconfig.d/work.gitconfig` containing:
-
-   ```
-   [user]
-       name = Your Work Name
-       email = your.name@company.com
-       signingkey = DEF456GHI789
-   ```
-
-3. Add to your main `~/.gitconfig`:
-
-   ```
-   [includeIf "gitdir:~/personal/"]
-       path = ~/.gitconfig.d/personal.gitconfig
-
-   [includeIf "gitdir:~/work/"]
-       path = ~/.gitconfig.d/work.gitconfig
-   ```
-
-## Example 2: Working with multiple client contexts
+Directory rules break the moment you clone into `/tmp` or a scratch folder. Match on the remote too:
 
 ```bash
-# Add a client context
-git-context add --name client1 --path ~/clients/client1/ --user-name "Your Name" --user-email "you@client1.com"
-
-# Add another client context
-git-context add --name client2 --path ~/clients/client2/ --user-name "Your Name" --user-email "you@client2.com"
-
-# Later, remove a client when no longer needed
-git-context remove --name client1
+git-context add work --dir ~/work --remote github.com/acme --remote gitlab.acme.io -y --email me@acme.io
 ```
 
-## Example 3: Using repository URL detection (New in v1.1.0)
+## Two GitHub accounts, two SSH keys
+
+GitHub picks the account from the SSH key, so the key has to switch with the identity:
 
 ```bash
-# First, configure contexts with URL patterns
-git-context add
-
-# During the interactive setup:
-# Name: github-personal
-# Path Pattern: ~/repos/personal/**
-# User Name: Your Name
-# User Email: personal@example.com
-# Add URL Patterns? Yes
-# URL Pattern: github.com/your-username/*
-# URL Pattern: <press Enter to finish>
-
-# Add another context for work
-git-context add
-
-# Name: github-work
-# Path Pattern: ~/repos/work/**
-# User Name: Your Work Name
-# User Email: you@company.com
-# Add URL Patterns? Yes
-# URL Pattern: github.com/company-org/*
-# URL Pattern: <press Enter to finish>
-
-# Now in any git repository, you can detect the context based on the remote URL
-cd ~/projects/any-location/company-project/
-git-context detect-url
-# This will show: "Repository URL matches context: github-work"
+git-context add personal --remote github.com/my-handle --ssh-key ~/.ssh/id_personal --email me@home.io -y
+git-context add work     --remote github.com/acme      --ssh-key ~/.ssh/id_acme     --email me@acme.io -y
 ```
 
-This example demonstrates how Git Context Switcher can automatically use the right identity based on the remote repository URL, regardless of where the repository is located on your filesystem.
+No `~/.ssh/config` host aliases needed; clone URLs stay exactly as GitHub shows them.
 
-## Example 4: Using templates and import/export (New in v1.1.0)
+## SSH commit signing
 
 ```bash
-# List available templates
-git-context templates
-
-# Add a new context using a template
-git-context add
-# Select "Use a template? Yes"
-# Select template: personal
-# Enter name: my-personal
-# Enter path pattern: ~/projects/**
-# Enter user name and email
-
-# Export your contexts to share with teammates or use on another machine
-git-context export
-# Enter export path: ./my-contexts.json
-
-# On another machine, import your contexts
-git-context import
-# Enter import path: ./my-contexts.json
-# Select contexts to import
-# Choose whether to replace existing contexts with same names
+git-context edit work --sign ssh --ssh-key ~/.ssh/id_acme -y
+git log --show-signature -1     # verifies against ~/.gitconfig.d/allowed_signers
 ```
 
-This allows you to quickly set up consistent contexts across different machines and share standard configurations with team members.
+Upload the same public key to GitHub as a *signing* key to get the Verified badge.
+
+## Extra per-context settings
+
+```bash
+git-context edit work --set pull.rebase=true --set 'url.git@github.com:.insteadOf=https://github.com/' -y
+```
+
+## Never commit as the wrong person again
+
+```bash
+git-context guard on
+cd /tmp && git init x && cd x && git commit --allow-empty -m test
+# fatal: no email was given and auto-detection is disabled
+```
+
+## Check a whole folder for slips
+
+```bash
+git-context audit ~/src --since "1 year ago"
+```
+
+## Move your setup to a new machine
+
+```bash
+git-context export > contexts.json      # old machine
+git-context import contexts.json -y     # new machine
+```
+
+SSH key paths come across as-is, so copy or recreate the keys at the same paths.
+
+## Dotfiles CI
+
+```bash
+git-context doctor --json | jq '.[] | select(.level == "error")'
+```

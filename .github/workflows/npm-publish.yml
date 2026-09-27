@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org/
 
       # Install dependencies
@@ -28,10 +28,8 @@ jobs:
         run: npm ci
 
       # Run tests and linting to ensure quality
-      - name: Test and lint
-        run: |
-          npm run lint
-          npm test
+      - name: Lint, type check and test
+        run: npm run check
 
       # Extract version from the release tag
       - name: Get version from tag

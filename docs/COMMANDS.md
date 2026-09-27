@@ -1,181 +1,78 @@
-# Command Reference
+# Command reference
 
-This document provides a complete reference for all commands and options available in Git Context Switcher.
+Every command that asks questions also takes flags; `-y` skips the prompts. Prompts only appear in an interactive terminal.
 
-## Setup Command
+## `setup`
 
-```bash
-git-context setup [options]
-```
+Interactive wizard: pick a template, answer a few questions, repeat for each context, then optionally turn on the identity guard.
 
-Initialize and configure git contexts with an interactive wizard.
+## `add [name]`
 
-Options:
-
-- `--force` - Override existing configuration
-- `--quiet` - Reduce console output
-
-Example:
-
-```bash
-# Run setup with minimal output
-git-context setup --quiet
-```
-
-## Add Command
-
-```bash
-git-context add [options]
-```
-
-Add a new git context configuration.
-
-Options:
-
-- `--name <n>` - Context name
-- `--path <path>` - Repository path pattern
-- `--user-name <n>` - Git user name
-- `--user-email <email>` - Git user email
-- `--signing-key <key>` - GPG signing key
-- `--no-interactive` - Skip interactive prompts
-
-Example:
+| Flag | |
+|---|---|
+| `--dir <path>` | Directory the context applies to. Repeatable. `~`, absolute and relative paths all work |
+| `--remote <pattern>` | Remote it applies to, e.g. `github.com/acme` or `github.com/*/work-*`. Repeatable. Paste a clone URL if you like |
+| `--user-name <name>` | `user.name` (leave out to keep your global name) |
+| `--email <email>` | `user.email` |
+| `--ssh-key <path>` | Private key for push/pull; sets `core.sshCommand` |
+| `--sign <ssh\|gpg\|none>` | Sign commits and tags |
+| `--signing-key <key>` | SSH public key path (defaults to `<ssh-key>.pub`) or GPG key id |
+| `--set <key=value>` | Any other git config for this context. Repeatable |
+| `--description <text>` | Shown in `list` |
+| `--template <name>` | Pre-fill from a template (see `templates`) |
+| `--force` | Overwrite an existing context with the same name |
+| `-y, --yes` | Don't prompt |
 
 ```bash
-# Add a new context non-interactively
-git-context add --name work --path ~/work/ --user-name "Work User" --user-email "work@example.com"
+git-context add oss --dir ~/oss --email me@users.noreply.github.com --set pull.rebase=true -y
 ```
 
-## Remove Command
+## `edit <name>`
 
-```bash
-git-context remove [options]
-```
+Same flags as `add`. Flags you pass replace the old values; prompts are pre-filled with the current ones. Settings added with `--set` are kept unless you override them.
 
-Remove an existing git context.
+## `remove <name>` (alias `rm`)
 
-Options:
+Removes the context's file and its includes. `-y` skips confirmation.
 
-- `--name <n>` - Context name to remove
-- `--no-interactive` - Skip confirmation prompt
+## `list` (alias `ls`)
 
-Example:
+Every context with its directories, remotes, identity and file. `--json` for scripts.
 
-```bash
-# Remove a context without confirmation
-git-context remove --name old-client --no-interactive
-```
+## `whoami`
 
-## List Command
+The identity git will use in the current directory and the file each value comes from. `--json` for scripts. Outside a repo no context applies, so it shows your global settings.
 
-```bash
-git-context list [options]
-```
+## `doctor`
 
-List all configured contexts.
+Read-only health check. Exits 1 if it finds an error, so it works in a dotfiles CI job. `--json` for scripts.
 
-Options:
+## `guard [on|off|status]`
 
-- `--format <format>` - Output format (text, json)
+Turns the identity guard on or off, or shows its status (default).
 
-Example:
+## `audit [dir]`
 
-```bash
-# List contexts in JSON format
-git-context list --format json
-```
+Finds repos under `dir` (default: current directory) and lists recent commits whose author email is one of yours but isn't the one git resolves for that repo today. Exits 1 if it finds any.
 
-## Apply Command
+| Flag | Default |
+|---|---|
+| `--depth <n>` | `3` |
+| `--since <when>` | `"90 days ago"` (anything `git log --since` accepts) |
+| `--json` | |
 
-```bash
-git-context apply [options]
-```
+## `templates`
 
-Check which context applies to the current directory.
+Lists the built-in templates: `personal`, `work`, `client`, `opensource`.
 
-Options:
+## `export [file]` / `import <file>`
 
-- `--detail` - Show detailed configuration
+`export` writes every context as JSON (to stdout without a file). `import` reads that format, or a 1.x export. Existing contexts are skipped unless you pass `--replace`; `-y` imports everything without the picker.
 
-Example:
+## `migrate`
 
-```bash
-# Show detailed context information for current directory
-git-context apply --detail
-```
+Converts a 1.x setup. It runs automatically the first time you use any other command, so you rarely need it.
 
-## Detect URL Command (New in v1.1.0)
+## Removed in 2.0
 
-```bash
-git-context detect-url [options]
-```
-
-Detect the appropriate context based on the repository remote URL.
-
-Options:
-
-- `--remote <n>` - Specify remote name (default: origin)
-
-Example:
-
-```bash
-# Detect context using upstream remote instead of origin
-git-context detect-url --remote upstream
-```
-
-## Templates Command (New in v1.1.0)
-
-```bash
-git-context templates
-```
-
-List available context templates for quick setup.
-
-Example:
-
-```bash
-# View all available templates
-git-context templates
-```
-
-## Export Command (New in v1.1.0)
-
-```bash
-git-context export [options]
-```
-
-Export your contexts to a JSON file for sharing or backup.
-
-Options:
-
-- `--file <path>` - Specify output file path (default: ./git-contexts-export.json)
-- `--no-interactive` - Skip interactive prompts
-
-Example:
-
-```bash
-# Export to a custom location
-git-context export --file ~/backups/my-contexts.json
-```
-
-## Import Command (New in v1.1.0)
-
-```bash
-git-context import [options]
-```
-
-Import contexts from a JSON file.
-
-Options:
-
-- `--file <path>` - Specify import file path
-- `--merge` - Merge with existing contexts (default behavior)
-- `--replace` - Replace existing contexts with same names
-- `--no-interactive` - Skip interactive prompts
-
-Example:
-
-```bash
-# Import contexts and replace any with the same names
-git-context import --file ~/shared-configs/team-contexts.json --replace
-```
+`apply` and `detect-url` still run but now just call `whoami`.
