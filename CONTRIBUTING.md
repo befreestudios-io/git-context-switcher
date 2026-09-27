@@ -32,7 +32,7 @@ When suggesting enhancements:
 1. Fork the repository
 2. Create a new branch for your feature (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests (`npm test`) and linting (`npm run lint`)
+4. Run `npm run check` (lint, type check and tests)
 5. Commit your changes (`git commit -m 'Add some amazing feature'`)
 6. Push to your branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
@@ -57,27 +57,25 @@ cd git-context-switcher
 # Install dependencies
 npm install
 
-# Run tests
-npm test
-
-# Run linting
-npm run lint
+# Lint, type check and test
+npm run check
 ```
+
+You need Node.js 22.13+ and git 2.36+.
 
 ## Testing
 
-We use Jest for testing. All new code should include appropriate tests.
+Tests use Node's built-in test runner (`node:test`) and run real git against a throwaway home directory (see `test/helpers.js`), so they never touch your own gitconfig. Prefer asserting on what git actually resolves (`git config --get` inside a repo) over asserting on file contents.
 
 ```bash
-# Run all tests
-npm test
-
-# Run tests with coverage reporting
-npm run test:coverage
-
-# Run tests in watch mode during development
-npm run test:watch
+npm test                # all tests
+npm run test:coverage   # with coverage (writes lcov.info)
+node --test --watch "test/**/*.test.js"
 ```
+
+## Types
+
+The code is plain JavaScript with JSDoc types, checked by `npm run typecheck` (TypeScript's `checkJs`). There's no build step: what's in `lib/` is what ships.
 
 ## Style Guide
 

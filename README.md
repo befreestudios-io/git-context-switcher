@@ -5,159 +5,79 @@
 [![npm version](https://img.shields.io/npm/v/git-context-switcher.svg)](https://www.npmjs.com/package/git-context-switcher)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Switch between git contexts easily for different environments (personal, work, client projects, etc.) using Git's conditional includes.
+Use the right git identity — name, email, SSH key and commit signing — automatically, based on **where a repo lives** or **where its remote points**.
 
-## Table of Contents
+It's a thin layer over git's own [conditional includes](https://git-scm.com/docs/git-config#_conditional_includes). Git does the matching; this tool writes the config for you, checks it, and catches the mistakes.
 
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-  - [Command Reference](docs/COMMANDS.md)
-  - [Usage Examples](docs/EXAMPLES.md)
-  - [How It Works](docs/HOW_IT_WORKS.md)
-  - [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Contributing](#contributing)
-- [License](#license)
-- [Security](#security)
+```console
+$ git-context add work --dir ~/work --remote github.com/acme --email me@acme.io --ssh-key ~/.ssh/id_acme --sign ssh -y
+✔ Added "work"
 
-## Features
+$ cd ~/src/some-acme-repo && git-context whoami
+  context  work            (~/.gitconfig.d/work.gitconfig)
+  name     Burton          (~/.gitconfig)
+  email    me@acme.io      (~/.gitconfig.d/work.gitconfig)
+  signing  ssh             (~/.gitconfig.d/work.gitconfig)
+  ssh      ssh -i ~/.ssh/id_acme -o IdentitiesOnly=yes  (~/.gitconfig.d/work.gitconfig)
+```
 
-### Interactive Setup Wizard
+## What you get
 
-- Guides you through creating multiple context-specific configurations
-- Automatically organizes the configs in your global .gitconfig file
+| | |
+|---|---|
+| **Directory and remote matching** | `--dir ~/work` uses `gitdir:`; `--remote github.com/acme` uses `hasconfig:remote.*.url:` so a repo cloned *anywhere* still gets the right identity, for https and ssh URLs alike |
+| **SSH keys and signing per context** | Sets `core.sshCommand` so pushes use the right key, and SSH or GPG commit signing. Maintains an allowed-signers file so `git log --show-signature` verifies your own commits |
+| **`whoami`** | The identity git will actually use here, and which file each value came from |
+| **`doctor`** | Catches the classic mistakes: a global `[user]` block that silently overrides every context, `gitdir:` patterns missing their trailing slash, missing key files |
+| **Identity guard** | Optional. Makes git *refuse* to commit where no context sets an email, instead of quietly using your personal address at work |
+| **`audit`** | Scans a folder of repos for recent commits made with the wrong one of your emails |
+| **Plays nicely with your config** | Only touches includes that point into `~/.gitconfig.d/`. Hand-written includes and everything else stay put. Backs up your gitconfig before every change |
+| **Scriptable** | Every command works non-interactively with flags; `list`, `whoami`, `doctor` and `audit` have `--json` |
 
-### Multiple Context Support
+## Install
 
-- Supports any number of different contexts (personal, work, client1, client2, etc.)
-- Each context gets its own configuration file
-
-### Path-Based Pattern Matching
-
-- Uses git's conditional includes based on repository paths
-- Automatically applies the right identity based on where your repositories are located
-
-### Repository URL-Based Detection (New in v1.1.0)
-
-- Automatically detect the appropriate context based on repository remote URLs
-- Match GitHub, GitLab, or any git hosting provider with flexible pattern matching
-- Supports both HTTPS and SSH remote URL formats
-
-### Context Templates (New in v1.1.0)
-
-- Quickly create new contexts using predefined templates
-- Built-in templates for common scenarios (personal, work, client projects, open source)
-- Auto-configure URL patterns for easier setup
-
-### Import/Export Capability (New in v1.1.0)
-
-- Share context configurations between machines or team members
-- Export your contexts to a single JSON file
-- Import contexts from a shared configuration file
-
-### Configuration Management
-
-- Creates a `.gitconfig.d` directory to organize your context-specific configs
-- Backs up your existing configuration before making changes
-- Handles existing conditional includes safely
-
-## Installation
-
-### NPM (Recommended)
-
-The easiest way to install Git Context Switcher:
+Needs Node.js 22.13+ and git 2.36+ (older git still does directory matching).
 
 ```bash
-# Install globally for command-line use
 npm install -g git-context-switcher
-
-# After installation, you can use the command from anywhere
-git-context --version
+git-context setup      # interactive wizard
 ```
 
-### Local Development Installation
+## Quick start
 
 ```bash
-# Clone the repository
-git clone https://github.com/befreestudios-io/git-context-switcher.git
-cd git-context-switcher
+# A context per identity
+git-context add personal --dir ~/personal --email me@home.io -y
+git-context add work --dir ~/work --remote github.com/acme --email me@acme.io --sign ssh --ssh-key ~/.ssh/id_acme -y
 
-# Install dependencies
-npm install
+# Check it
+git-context doctor
+cd ~/work/api && git-context whoami
 
-# Make the script executable
-chmod +x index.js
+# Optional: refuse commits anywhere no context applies
+git-context guard on
 
-# Create a global symlink to use the command anywhere
-npm link
+# Find past slips
+git-context audit ~/src --since "6 months ago"
 ```
 
-## Quick Start
-
-### Setup Wizard
-
-Run the interactive setup wizard to configure your git contexts:
-
-```bash
-git-context setup
-```
-
-The wizard will:
-
-1. Create a `.gitconfig.d` directory in your home folder
-2. Back up your existing git config
-3. Guide you through setting up multiple contexts
-4. Update your main `.gitconfig` with conditional includes
-
-### Basic Usage
-
-Once set up, Git will automatically use the correct identity based on your repository location. You can also use these commands:
-
-```bash
-# List all your configured contexts
-git-context list
-
-# Check which context applies to the current directory
-git-context apply
-
-# Add a new context
-git-context add
-```
+Upgrading from 1.x? Your contexts are migrated automatically the first time you run any command (your old `~/.gitcontexts` is kept as `~/.gitcontexts.v1.bak`). See the [changelog](CHANGELOG.md) for what changed.
 
 ## Documentation
 
-For more detailed information, please see the following documentation:
-
-- [Command Reference](docs/COMMANDS.md) - Complete reference for all commands and options
-- [Usage Examples](docs/EXAMPLES.md) - Detailed examples showing common use cases
-- [How It Works](docs/HOW_IT_WORKS.md) - Technical explanation of how the tool works
-- [Troubleshooting](docs/TROUBLESHOOTING.md) - Solutions for common issues
-
-## Versioning
-
-Git Context Switcher follows [Semantic Versioning](https://semver.org/). For the versions available, see the [tags on this repository](https://github.com/befreestudios-io/git-context-switcher/tags) or check the [CHANGELOG.md](CHANGELOG.md) file.
-
-For maintainers and contributors looking to release new versions, please see our [Release Process](RELEASING.md) documentation.
-
-## License
-
-MIT
+- [Command reference](docs/COMMANDS.md)
+- [How it works](docs/HOW_IT_WORKS.md)
+- [Examples](docs/EXAMPLES.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+See [CONTRIBUTING.md](CONTRIBUTING.md). `npm run check` runs lint, type checks and tests; tests run real git in a throwaway home directory.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## License
 
-Please make sure your code follows the existing style and passes all tests.
-
-For more information about our development process, coding standards, and CI/CD pipeline, see our [Contributing Guidelines](CONTRIBUTING.md).
+MIT, see [LICENSE](LICENSE).
 
 ## Security
 
-For security issues, please see our [Security Policy](SECURITY.md).
+See [SECURITY.md](SECURITY.md).

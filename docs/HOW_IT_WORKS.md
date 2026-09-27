@@ -1,81 +1,77 @@
-# How It Works
+# How it works
 
-Git Context Switcher uses Git's [conditional includes](https://git-scm.com/docs/git-config#_conditional_includes) feature to apply different configurations based on the repository path or URL.
+Git already knows how to switch identities: [conditional includes](https://git-scm.com/docs/git-config#_conditional_includes). git-context writes and checks that config; it never runs in the background and never sits between you and git.
 
-## Core Mechanism
+## What gets written
 
-The core mechanism of Git Context Switcher is quite simple but powerful:
+Each context is one file, `~/.gitconfig.d/<name>.gitconfig`:
 
-1. **Configuration Organization**: The tool creates a `.gitconfig.d` directory in your home folder to store separate configuration files for each context.
-
-2. **Conditional Includes**: It sets up conditional includes in your main `.gitconfig` file that tell Git which configuration file to use based on the repository location.
-
-3. **Automatic Context Detection**: When you work in a repository, Git automatically uses the matching context's configuration, applying the correct user name, email, and other settings.
-
-## Example Configuration Structure
-
-For example, if you have:
-
-- Personal projects in `~/personal/`
-- Work projects in `~/work/`
-
-The tool will create:
-
-1. A `.gitconfig.d` directory with separate config files:
-
-   - `.gitconfig.d/personal.gitconfig`
-   - `.gitconfig.d/work.gitconfig`
-
-2. Add these conditional includes to your main `.gitconfig`:
-
-   ```
-   [includeIf "gitdir:~/personal/**"]
-       path = ~/.gitconfig.d/personal.gitconfig
-
-   [includeIf "gitdir:~/work/**"]
-       path = ~/.gitconfig.d/work.gitconfig
-   ```
-
-## URL-Based Detection
-
-For repositories that aren't organized by directory, Git Context Switcher also supports detecting contexts based on the repository's remote URL:
-
-1. **URL Pattern Configuration**: Each context can have URL patterns associated with it.
-
-2. **Pattern Matching**: The tool matches these patterns against the remote URL of the current repository.
-
-3. **Pattern Priority**: If multiple contexts match a repository URL, the most specific pattern takes precedence.
-
-The implementation uses these conditional includes:
-
-```
-[includeIf "hasconfig:remote.*.url:**/github.com/personal-org/**"]
-    path = ~/.gitconfig.d/personal.gitconfig
-
-[includeIf "hasconfig:remote.*.url:**/github.com/work-org/**"]
-    path = ~/.gitconfig.d/work.gitconfig
+```ini
+[gitcontext]
+	name = work
+	description = Day job
+[user]
+	name = Burton
+	email = me@acme.io
+	signingkey = /home/burton/.ssh/id_acme.pub
+[core]
+	sshCommand = ssh -i ~/.ssh/id_acme -o IdentitiesOnly=yes
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
 ```
 
-## Command Implementation
+Your global gitconfig gets one `includeIf` per condition, pointing at that file:
 
-The tool is built with a modular architecture:
+```ini
+[includeIf "gitdir:~/work/"]
+	path = ~/.gitconfig.d/work.gitconfig
+[includeIf "hasconfig:remote.*.url:*://github.com/acme/**"]
+	path = ~/.gitconfig.d/work.gitconfig
+[includeIf "hasconfig:remote.*.url:*://*@github.com/acme/**"]
+	path = ~/.gitconfig.d/work.gitconfig
+[includeIf "hasconfig:remote.*.url:*@github.com:acme/**"]
+	path = ~/.gitconfig.d/work.gitconfig
+```
 
-1. **Command Structure**: Each command is implemented as a separate module with a consistent interface.
+That's the whole state. There is no separate database: `list`, `whoami` and `doctor` read it straight back from git.
 
-2. **Configuration Management**: The tool carefully manages the `.gitconfig` file, preserving existing settings while adding the conditional includes.
+## Directory matching
 
-3. **User Interface**: Provides both interactive and non-interactive modes to accommodate different usage scenarios.
+`--dir ~/work` becomes `gitdir:~/work/`. The trailing slash matters: git reads it as "anything under ~/work". Without it, git only matches a repo whose `.git` is exactly `~/work/.git`. `doctor` warns about that.
 
-4. **Error Handling**: Implements safeguards like configuration backups to prevent data loss.
+## Remote matching
 
-## Technical Details
+`--remote github.com/acme` becomes three `hasconfig:remote.*.url:` globs so it matches every URL form git accepts:
 
-Here are some additional technical details about the implementation:
+| Remote URL | Matched by |
+|---|---|
+| `https://github.com/acme/api.git` | `*://github.com/acme/**` |
+| `ssh://git@github.com/acme/api.git` | `*://*@github.com/acme/**` |
+| `git@github.com:acme/api.git` | `*@github.com:acme/**` |
 
-- **Backup System**: Before making changes to your `.gitconfig`, the tool creates a backup with a timestamp.
+The globs are anchored to the host, so `https://evil.example/github.com/acme/x` doesn't match. A pattern without a trailing wildcard covers everything under it; `github.com/*/work-*` matches repos named `work-…` in any org.
 
-- **Pattern Syntax**: Git's pattern matching syntax is used for directory paths, supporting wildcards and nested directories.
+Remote matching needs git 2.36 or newer.
 
-- **Path Normalization**: Handles different path formats across operating systems, ensuring the configuration works on Windows, macOS, and Linux.
+## Which includes are "ours"
 
-- **Persistent Storage**: Context configurations are stored in individual files, making them easy to edit manually if needed.
+An include is managed by git-context only if its `path` points at a file directly inside `~/.gitconfig.d/`. Anything else in your gitconfig, including includes you wrote yourself, is never modified.
+
+## Order matters
+
+Git applies config top to bottom and the last value wins. If your global gitconfig sets `[user] email` *after* the include blocks, it overrides every context. `doctor` checks for exactly this.
+
+## Identity guard
+
+`git-context guard on` sets git's own `user.useConfigOnly = true` and moves your global `user.email` into `gitcontext.savedEmail`. With no global email to fall back on, git refuses to commit anywhere no context sets one. `guard off` puts it back.
+
+## Safety
+
+- Every write goes through `git config`, so git does all parsing and quoting.
+- Git is run with an argument list, never through a shell.
+- The global gitconfig is backed up to `~/.gitconfig.d/backups/` before the first change in each run (the last 10 are kept).
+- Context files are written to a temp file and renamed into place, with mode 600.
